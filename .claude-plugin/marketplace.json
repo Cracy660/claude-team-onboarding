@@ -1,0 +1,15 @@
+{
+  "name": "claude-team-onboarding",
+  "description": "Team onboarding plugin for Jakub's Claude Code curriculum (Polish)",
+  "owner": {
+    "name": "Jakub Adamski",
+    "url": "https://github.com/jakubadamski"
+  },
+  "plugins": [
+    {
+      "name": "claude-team",
+      "source": "./plugins/claude-team",
+      "description": "Interactive Polish onboarding: TDD, git hygiene, portable hooks, stack setup, baseline plugins"
+    }
+  ]
+}
