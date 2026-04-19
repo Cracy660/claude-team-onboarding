@@ -1,0 +1,10 @@
+{
+  "name": "claude-team",
+  "version": "0.1.0",
+  "description": "Interactive Polish onboarding for Jakub's team: TDD workflow, git hygiene, portable hooks, stack setup, baseline plugins",
+  "author": {
+    "name": "Jakub Adamski",
+    "email": "adamski.jakub@gmail.com"
+  },
+  "homepage": "https://github.com/jakubadamski/claude-team-onboarding"
+}
