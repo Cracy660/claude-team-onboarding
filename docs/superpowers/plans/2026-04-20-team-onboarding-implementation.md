@@ -31,7 +31,7 @@
   "description": "Team onboarding plugin for Jakub's Claude Code curriculum (Polish)",
   "owner": {
     "name": "Jakub Adamski",
-    "url": "https://github.com/jakubadamski"
+    "url": "https://github.com/Cracy660"
   },
   "plugins": [
     {
@@ -66,7 +66,7 @@ git commit -m "feat(scaffold): add marketplace manifest declaring claude-team pl
     "name": "Jakub Adamski",
     "email": "adamski.jakub@gmail.com"
   },
-  "homepage": "https://github.com/jakubadamski/claude-team-onboarding"
+  "homepage": "https://github.com/Cracy660/claude-team-onboarding"
 }
 ```
 
@@ -2163,7 +2163,7 @@ Plugin marketplace + single plugin (`claude-team`) for Jakub Adamski's Claude Co
 In Claude Code Desktop (Mac/Windows/Linux):
 
 ```
-/plugin marketplace add jakubadamski/claude-team-onboarding
+/plugin marketplace add Cracy660/claude-team-onboarding
 /plugin install claude-team@claude-team-onboarding
 /reload-plugins
 /claude-team:onboarding
@@ -2370,17 +2370,17 @@ git commit -m "docs: record 2026-04-20 Mac manual validation log"
 
 Jakub runs in terminal (requires `gh` CLI installed):
 ```bash
-gh repo create jakubadamski/claude-team-onboarding --public --source=. --description "Team onboarding plugin for Jakub's Claude Code curriculum (Polish)" --push
+gh repo create Cracy660/claude-team-onboarding --public --source=. --description "Team onboarding plugin for Jakub's Claude Code curriculum (Polish)" --push
 ```
 
-Expected: repo created at `https://github.com/jakubadamski/claude-team-onboarding`, initial commits pushed to `main`.
+Expected: repo created at `https://github.com/Cracy660/claude-team-onboarding`, initial commits pushed to `main`.
 
 - [ ] **Step 2: Verify marketplace install from GitHub**
 
 In a fresh Claude Code session (or after removing the local marketplace):
 ```
 /plugin marketplace remove claude-team-onboarding
-/plugin marketplace add jakubadamski/claude-team-onboarding
+/plugin marketplace add Cracy660/claude-team-onboarding
 /plugin install claude-team@claude-team-onboarding
 /reload-plugins
 ```

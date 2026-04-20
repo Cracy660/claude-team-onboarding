@@ -44,7 +44,7 @@ Kacper is the team's IT escape hatch — the skill explicitly hands off to him w
 ### Usage ritual
 
 ```
-/plugin marketplace add jakubadamski/claude-team-onboarding
+/plugin marketplace add Cracy660/claude-team-onboarding
 /plugin install claude-team@claude-team-onboarding
 /reload-plugins
 /claude-team:onboarding              ← or simply chat "zacznij onboarding"
@@ -86,7 +86,7 @@ All slash commands namespaced by plugin name (`claude-team`), per Claude Code pl
 
 ## 6. Plugin repository layout
 
-Repository: `github.com/jakubadamski/claude-team-onboarding` (public, MIT or similar)
+Repository: `github.com/Cracy660/claude-team-onboarding` (public, MIT or similar)
 
 ```
 claude-team-onboarding/

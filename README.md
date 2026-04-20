@@ -7,7 +7,7 @@ Plugin marketplace + single plugin (`claude-team`) for Jakub Adamski's Claude Co
 In Claude Code Desktop (Mac/Windows/Linux):
 
 ```
-/plugin marketplace add jakubadamski/claude-team-onboarding
+/plugin marketplace add Cracy660/claude-team-onboarding
 /plugin install claude-team@claude-team-onboarding
 /reload-plugins
 /claude-team:onboarding
