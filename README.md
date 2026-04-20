@@ -4,7 +4,33 @@ Plugin marketplace + single plugin (`claude-team`) for Jakub Adamski's Claude Co
 
 ## Install (student-facing)
 
-In Claude Code Desktop (Mac/Windows/Linux):
+### Claude Code Desktop (Mac / Windows)
+
+The Code tab has two input surfaces that are easy to confuse:
+
+- The **prompt box** at the bottom (where you normally chat with Claude) — **does not** accept plugin-management slash commands. Typing `/plugin …` here returns `/plugin isn't a recognized command here. Some commands only work in the Claude Code terminal.`
+- The **integrated terminal pane** — opens with **Ctrl + `** (backtick) or **Views → Terminal**. Plugin commands go here.
+
+Steps:
+
+1. Open the **Code** tab and pick any project folder.
+2. Open the integrated terminal (**Ctrl + `** or **Views → Terminal**).
+3. In the terminal, run these three commands, each followed by Enter:
+   ```
+   /plugin marketplace add Cracy660/claude-team-onboarding
+   /plugin install claude-team@claude-team-onboarding
+   /reload-plugins
+   ```
+   When `install` asks for scope, pick **User**.
+4. Close the terminal pane. In the normal prompt box, type:
+   ```
+   /claude-team:onboarding
+   ```
+   (or just chat `zacznij onboarding`). The interview takes over in Polish.
+
+### Claude Code CLI (Linux or anyone running `claude` in a terminal)
+
+Run all four commands directly — no Code tab / terminal distinction applies:
 
 ```
 /plugin marketplace add Cracy660/claude-team-onboarding
@@ -12,8 +38,6 @@ In Claude Code Desktop (Mac/Windows/Linux):
 /reload-plugins
 /claude-team:onboarding
 ```
-
-Or just chat "zacznij onboarding".
 
 ## What it installs
 
