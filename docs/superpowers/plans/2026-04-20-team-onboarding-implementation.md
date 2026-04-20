@@ -127,7 +127,7 @@ git commit -m "chore(scaffold): add plugin directory skeleton"
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test"
   }
 }
 ```
