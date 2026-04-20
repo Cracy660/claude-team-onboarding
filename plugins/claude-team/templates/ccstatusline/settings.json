@@ -1,0 +1,110 @@
+{
+  "version": 3,
+  "lines": [
+    [
+      {
+        "id": "1",
+        "type": "model",
+        "color": "brightRed"
+      },
+      {
+        "id": "a4bfafa9-4c5d-4792-a311-4c8f61981fb7",
+        "type": "thinking-effort",
+        "backgroundColor": "bgBrightWhite",
+        "color": ""
+      },
+      {
+        "id": "4251323a-2415-49ee-9619-f7afe982aca9",
+        "type": "git-branch",
+        "backgroundColor": "bgBlue"
+      },
+      {
+        "id": "ea9ce4a3-e126-4c0a-9001-728765a1a200",
+        "type": "git-worktree",
+        "backgroundColor": "bgBrightYellow"
+      },
+      {
+        "id": "7d791e15-26a6-4625-962d-9f2620eb57a1",
+        "type": "current-working-dir",
+        "backgroundColor": "bgBrightBlue",
+        "metadata": {
+          "segments": "3"
+        }
+      }
+    ],
+    [
+      {
+        "id": "d5677419-d3fe-419c-8458-010cccb57c9f",
+        "type": "context-length",
+        "backgroundColor": "bgBrightBlack",
+        "color": "brightRed"
+      },
+      {
+        "id": "3abc7bb9-1f29-43fa-a531-223bd0878125",
+        "type": "context-percentage-usable",
+        "backgroundColor": "bgWhite"
+      },
+      {
+        "id": "b51d1ed1-b5c2-4751-b185-1caff94302f0",
+        "type": "tokens-total",
+        "backgroundColor": "bgBrightCyan"
+      },
+      {
+        "id": "6f1d5639-48bf-400b-be8d-d24f2fa8ea49",
+        "type": "session-usage",
+        "backgroundColor": "bgBlue"
+      },
+      {
+        "id": "a83c7a23-da36-487d-a8d1-cab5c977a56e",
+        "type": "weekly-usage",
+        "backgroundColor": "bgBrightWhite"
+      }
+    ],
+    [
+      {
+        "id": "7358de61-b078-4911-bb94-d9c8fc2c5b6e",
+        "type": "claude-session-id",
+        "backgroundColor": "bgBrightRed"
+      },
+      {
+        "id": "d8d4cb0c-2159-44af-8ddb-da896f9e03d1",
+        "type": "session-name",
+        "backgroundColor": "bgBrightCyan"
+      },
+      {
+        "id": "2aad4716-b2c7-480d-aa40-f1989eb1e373",
+        "type": "session-clock",
+        "backgroundColor": "bgBrightBlue"
+      },
+      {
+        "id": "ac570c91-6513-48ff-b379-836e355f42e8",
+        "type": "reset-timer",
+        "backgroundColor": "bgMagenta"
+      },
+      {
+        "id": "c5022953-cc4f-4701-a621-88a3f44b692c",
+        "type": "weekly-reset-timer",
+        "backgroundColor": "bgCyan"
+      }
+    ]
+  ],
+  "flexMode": "full-minus-40",
+  "compactThreshold": 60,
+  "colorLevel": 3,
+  "defaultPadding": " ",
+  "inheritSeparatorColors": false,
+  "globalBold": true,
+  "powerline": {
+    "enabled": true,
+    "separators": [
+      ""
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
+    "startCaps": [],
+    "endCaps": [],
+    "theme": "nord-aurora",
+    "autoAlign": false
+  }
+}

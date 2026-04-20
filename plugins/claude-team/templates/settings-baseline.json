@@ -1,0 +1,117 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(uv:*)",
+      "Bash(ruff:*)",
+      "Bash(pytest:*)",
+      "Bash(ls:*)",
+      "Bash(which:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm create:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npx eslint:*)",
+      "Read(**/*.md)",
+      "Read(**/*.txt)",
+      "Read(**/*.json)",
+      "Read(**/*.yaml)",
+      "Read(**/*.yml)",
+      "Read(**/*.py)",
+      "Read(**/*.ts)",
+      "Read(**/*.tsx)",
+      "Read(**/*.js)",
+      "Read(**/*.jsx)",
+      "Read(**/*.css)",
+      "Read(**/*.html)",
+      "Read(**/*.sh)",
+      "Read(**/*.toml)",
+      "Read(**/*.lock)",
+      "Read(**/.gitignore)",
+      "Read(**/.env.example)",
+      "Read(**/Makefile)",
+      "Read(**/Dockerfile)"
+    ],
+    "deny": ["Bash(rm -rf:*)", "Bash(sudo:*)"]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_HOOKS_DIR}}/protect-files.mjs"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_HOOKS_DIR}}/commit-gate.mjs",
+            "if": "Bash(git commit*)|Bash(git push*)",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_HOOKS_DIR}}/auto-format.mjs"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "You are a test quality reviewer. Analyze the test file that was just written or edited. The tool input is: $ARGUMENTS\n\nCheck for:\n1. Tautological assertions (expect(true).toBe(true), testing render without checking content)\n2. Missing negative cases\n3. Tests checking existence rather than behavior\n4. Circular mocks (mocked return mirrors expected output)\n\nIf tests are meaningful: PASS\nIf problems found: FAIL + list each problem tersely.",
+            "if": "Write(*.test.*)|Write(*.spec.*)|Edit(*.test.*)|Edit(*.spec.*)|MultiEdit(*.test.*)|MultiEdit(*.spec.*)"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_HOOKS_DIR}}/post-compact.mjs"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "claude-team@claude-team-onboarding": true
+  },
+  "effortLevel": "high",
+  "skipDangerousModePermissionPrompt": false
+}
