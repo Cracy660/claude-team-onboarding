@@ -76,6 +76,7 @@ WAVE_EFFORT_DEFAULT=medium
 WAVE_MODEL_JUDGMENT=gpt-5.6-sol    multi-file or judgment tasks (documented default)
 WAVE_LOG_DIR=.superpowers/dispatch-logs
 WAVE_REGISTRY_DIR=docs/registry    empty = the project runs without a registry
+WAVE_EXTERNAL_KEYS="OPENAI_API_KEY"  env var names masked at seal; may be empty
 ```
 
 Scripts source the file relative to the repo root (`git rev-parse --show-toplevel`); hooks
@@ -248,8 +249,8 @@ reserved; bans never fed to code agents) and the canonical queries.
 
 ## Playbook skill `running-waves`
 
-`SKILL.md` stays short: the role split; the lifecycle in about a dozen lines pointing at
-the references; the hard rules (the controller never implements; every dispatch goes
+`SKILL.md` stays short: the role split; a pointer to `lifecycle.md` rather than a
+summary of it (a summarized workflow gets followed instead of the reference); the hard rules (the controller never implements; every dispatch goes
 through the script; briefs carry statements verbatim; gates scale to risk; the controller
 re-runs what the sandbox blocks; registry flips only in the main checkout; compact at
 tranche boundaries; delegate debugging). References load on demand:
