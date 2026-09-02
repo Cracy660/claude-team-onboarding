@@ -133,7 +133,7 @@ equals `--git-common-dir`), on any branch. A dirty tree is reported, not refused
    |---|---|---|
    | `.claude/wave.env` | rendered from answers | overwrite after backup |
    | `.claude/settings.json` | `settings.json` | union: `permissions.deny` gains `Bash(codex exec:*)`, `Bash(codex resume:*)`; `permissions.allow` gains the two script paths in bare and `bash `-prefixed forms; hook entries appended if their command is absent; other keys preserved |
-   | `.claude/hooks/code-only-branch.sh`, `registry-guard.sh` | verbatim | overwrite after backup; registry-guard only when a registry is configured |
+   | `.claude/hooks/code-only-branch.sh`, `registry-guard.sh` | verbatim | overwrite after backup; both hooks are always installed because the settings fragment registers both; registry-guard exits 0 when no registry is configured |
    | `.claude/skills/dispatch/SKILL.md`, `scripts/dispatch.sh` | verbatim | overwrite after backup |
    | `.claude/skills/registry/SKILL.md`, `scripts/registry-write.sh` | verbatim | overwrite after backup; only with a registry |
    | `.claude/agents/red-gate.md` | verbatim | overwrite after backup |
