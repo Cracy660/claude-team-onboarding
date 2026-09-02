@@ -98,7 +98,7 @@ test('registry-guard passes the projection tool alone', (t) => {
   const ctx = setup(t)
   const r = ctx.hook(
     REGISTRY_GUARD,
-    `python3 docs/registry/tools/gen-spec-exec.py --registry-dir docs/registry`,
+    `python3 docs/registry/tools/gen-spec-exec.py --registry-dir docs/registry # rebuilds docs/registry/spec-exec.db, DROP TABLE spec inside`,
   )
   assert.equal(r.status, 0, r.stderr)
 })
