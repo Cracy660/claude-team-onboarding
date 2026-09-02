@@ -84,11 +84,21 @@ test('registry-guard passes the same write through registry-write.sh', (t) => {
   assert.equal(r.status, 0, r.stderr)
 })
 
-test('registry-guard passes the projection tool rebuilding spec-exec.db', (t) => {
+test('registry-guard blocks a raw DROP TABLE even when a tools script ran earlier in the same command', (t) => {
   const ctx = setup(t)
   const r = ctx.hook(
     REGISTRY_GUARD,
     `python3 docs/registry/tools/gen-spec-exec.py --registry-dir docs/registry && sqlite3 docs/registry/spec-exec.db "DROP TABLE IF EXISTS spec"`,
+  )
+  assert.equal(r.status, 2)
+  assert.match(r.stderr, /Blocked: raw destructive SQL against the registry/)
+})
+
+test('registry-guard passes the projection tool alone', (t) => {
+  const ctx = setup(t)
+  const r = ctx.hook(
+    REGISTRY_GUARD,
+    `python3 docs/registry/tools/gen-spec-exec.py --registry-dir docs/registry`,
   )
   assert.equal(r.status, 0, r.stderr)
 })
@@ -100,6 +110,60 @@ test('registry-guard passes prose that contains "hard delete"', (t) => {
     'echo "ruling: we hard delete findings from docs/registry/registry.db only after a seal"',
   )
   assert.equal(r.status, 0, r.stderr)
+})
+
+test('registry-guard blocks a forged registry-write.sh mention riding an unrelated destructive segment', (t) => {
+  const ctx = setup(t)
+  const r = ctx.hook(
+    REGISTRY_GUARD,
+    `echo "note: registry-write.sh is preferred" && sqlite3 docs/registry/registry.db "DELETE FROM spec_statement"`,
+  )
+  assert.equal(r.status, 2)
+  assert.match(r.stderr, /Blocked: raw destructive SQL against the registry/)
+})
+
+test('registry-guard passes a bare registry-write.sh invocation', (t) => {
+  const ctx = setup(t)
+  const r = ctx.hook(
+    REGISTRY_GUARD,
+    `registry-write.sh spec_statement --set "status='approved'" --where "id='x'" --note "n"`,
+  )
+  assert.equal(r.status, 0, r.stderr)
+})
+
+test('registry-guard passes a bash-invoked registry-write.sh', (t) => {
+  const ctx = setup(t)
+  const r = ctx.hook(
+    REGISTRY_GUARD,
+    `bash .claude/skills/registry/scripts/registry-write.sh finding --delete --where "id='F1'"`,
+  )
+  assert.equal(r.status, 0, r.stderr)
+})
+
+test('registry-guard passes a tools/ script invocation', (t) => {
+  const ctx = setup(t)
+  const r = ctx.hook(REGISTRY_GUARD, `python3 docs/registry/tools/ingest-review.py export.json`)
+  assert.equal(r.status, 0, r.stderr)
+})
+
+test('registry-guard blocks a raw sqlite3 delete reached via cd && sqlite3', (t) => {
+  const ctx = setup(t)
+  const r = ctx.hook(
+    REGISTRY_GUARD,
+    `cd docs/registry && sqlite3 registry.db "DELETE FROM spec_statement WHERE id='x'"`,
+  )
+  assert.equal(r.status, 2)
+  assert.match(r.stderr, /Blocked: raw destructive SQL against the registry/)
+})
+
+test('registry-guard blocks the second segment even when the first is an exempt registry-write.sh call', (t) => {
+  const ctx = setup(t)
+  const r = ctx.hook(
+    REGISTRY_GUARD,
+    `.claude/skills/registry/scripts/registry-write.sh spec_statement --set "x=1" --where "id='a'" --note "n" && sqlite3 docs/registry/registry.db "DELETE FROM spec_statement"`,
+  )
+  assert.equal(r.status, 2)
+  assert.match(r.stderr, /Blocked: raw destructive SQL against the registry/)
 })
 
 // Both hooks must stay silent where there is no wave tooling to protect.
