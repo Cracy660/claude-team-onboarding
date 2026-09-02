@@ -152,6 +152,45 @@ test('new calls codex with the sandbox, model, effort and last-message flags', (
   assert.equal(argv[argv.length - 1], 'do the task')
 })
 
+test('new places the worktree, branch, log and model under knobs that differ from the built-in defaults', (t) => {
+  // Every value here differs from both the script's own fallbacks (codex,
+  // gpt-5.6-terra, medium, .superpowers/dispatch-logs) and the ../demo-wt sample
+  // used elsewhere in this file: a script that hardcodes any of those would still
+  // pass every other test, because the fixtures happen to match the fallbacks.
+  const ctx = setup(t, {
+    waveEnv: {
+      WT_ROOT: '../pool-wt',
+      BRANCH_PREFIX: 'impl',
+      LOG_DIR: '.wave/logs',
+      MODEL_DEFAULT: 'model-x',
+      EFFORT_DEFAULT: 'low',
+    },
+  })
+  const r = ctx.dispatch(['new', 'task-a', ctx.prompt])
+  assert.equal(r.status, 0, r.stderr)
+
+  const wt = join(ctx.root, '..', 'pool-wt', 'task-a')
+  assert.equal(existsSync(wt), true)
+
+  const branches = ctx.run('git', ['branch', '--list', 'impl/task-a'])
+  assert.match(branches.stdout, /impl\/task-a/)
+
+  const logDir = join(ctx.root, '.wave/logs')
+  const entries = readdirSync(logDir)
+  assert.equal(
+    entries.some((f) => /^task-a\.\d{8}-\d{6}\.log$/.test(f)),
+    true,
+    `no timestamped log in ${entries.join(', ')}`,
+  )
+
+  const calls = readFakeCodexLog(ctx.codexLog)
+  assert.equal(calls.length, 1)
+  const { argv } = calls[0]
+  assert.equal(argv[argv.indexOf('--output-last-message') + 1], join(logDir, 'task-a.last.md'))
+  assert.equal(argv[argv.indexOf('-m') + 1], 'model-x')
+  assert.equal(argv[argv.indexOf('-c') + 1], 'model_reasoning_effort=low')
+})
+
 test('new terminates stdin so codex cannot stall waiting for input', (t) => {
   const ctx = setup(t)
   assert.equal(ctx.dispatch(['new', 'task-a', ctx.prompt]).status, 0)
@@ -256,6 +295,41 @@ test('resume finds the session by worktree path and runs inside the worktree', (
   assert.notEqual(realpathSync(last.cwd), ctx.root)
 })
 
+test("resume picks the session whose recorded cwd is this task's worktree, not the newest session", (t) => {
+  const ctx = setup(t)
+  const createdA = ctx.dispatch(['new', 'task-a', ctx.prompt])
+  assert.equal(createdA.status, 0, createdA.stderr)
+  const wtA = createdA.stdout.match(/^dispatch: task-a -> (\S+) \(/m)[1]
+  const createdB = ctx.dispatch(['new', 'task-b', ctx.prompt])
+  assert.equal(createdB.status, 0, createdB.stderr)
+  const wtB = createdB.stdout.match(/^dispatch: task-b -> (\S+) \(/m)[1]
+
+  const UUID_A = '0198e0b4-1111-1111-1111-111111111111'
+  const UUID_B = '0198e0b4-2222-2222-2222-222222222222'
+  const sessionDir = join(ctx.codexHome, 'sessions', '2026', '09', '02')
+  mkdirSync(sessionDir, { recursive: true })
+  // task-a's session file sorts lexicographically EARLIER, task-b's LATER: a
+  // "pick the newest session" implementation would grab task-b's UUID when
+  // asked to resume task-a, instead of filtering by which session's recorded
+  // cwd actually references task-a's worktree.
+  writeFileSync(
+    join(sessionDir, `rollout-2026-09-02T09-00-00-${UUID_A}.jsonl`),
+    `${JSON.stringify({ type: 'session_meta', cwd: wtA })}\n`,
+  )
+  writeFileSync(
+    join(sessionDir, `rollout-2026-09-02T10-00-00-${UUID_B}.jsonl`),
+    `${JSON.stringify({ type: 'session_meta', cwd: wtB })}\n`,
+  )
+
+  const r = ctx.dispatch(['resume', 'task-a', ctx.prompt])
+  assert.equal(r.status, 0, r.stderr)
+  assert.match(r.stdout, new RegExp(`session=${UUID_A}`))
+
+  const calls = readFakeCodexLog(ctx.codexLog)
+  const last = calls[calls.length - 1]
+  assert.equal(last.resumeId, UUID_A)
+})
+
 test('resume refuses a task with no worktree', (t) => {
   const ctx = setup(t)
   const r = ctx.dispatch(['resume', 'never-dispatched', ctx.prompt])
@@ -272,4 +346,17 @@ test('clean removes the worktree and keeps the branch', (t) => {
   assert.equal(existsSync(ctx.wt('task-a')), false)
   const branches = ctx.run('git', ['branch', '--list', 'codex/task-a'])
   assert.match(branches.stdout, /codex\/task-a/)
+})
+
+test('clean refuses a worktree holding uncommitted work and leaves it in place', (t) => {
+  const ctx = setup(t)
+  assert.equal(ctx.dispatch(['new', 'task-a', ctx.prompt]).status, 0)
+  const stray = join(ctx.wt('task-a'), 'stray.txt')
+  writeFileSync(stray, 'uncommitted work\n')
+
+  const r = ctx.dispatch(['clean', 'task-a'])
+  assert.equal(r.status, 1)
+  assert.match(r.stderr, /^dispatch: worktree dirty/m)
+  assert.equal(existsSync(ctx.wt('task-a')), true)
+  assert.equal(existsSync(stray), true)
 })
