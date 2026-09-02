@@ -4,7 +4,11 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PLUGIN_ROOT } from './helpers.mjs'
 
-const REFERENCES = join(PLUGIN_ROOT, 'skills', 'running-waves', 'references')
+const SKILL_DIR = join(PLUGIN_ROOT, 'skills', 'running-waves')
+const REFERENCES = join(SKILL_DIR, 'references')
+const SCENARIOS_DIR = join(PLUGIN_ROOT, 'tests', 'scenarios')
+
+const SCENARIOS = ['waves-debug-inline.md', 'waves-green-claim.md', 'waves-raw-codex.md']
 
 const BANNED = ['OIL', 'oil_wrapper', 'Polish', 'pnpm', 'Next.js', 'Mistral', 'Anthropic', 'Jakub']
 
@@ -12,6 +16,24 @@ function readReference(name) {
   const path = join(REFERENCES, name)
   assert.ok(existsSync(path), `missing reference file: ${name}`)
   return readFileSync(path, 'utf8')
+}
+
+function readSkill() {
+  const path = join(SKILL_DIR, 'SKILL.md')
+  assert.ok(existsSync(path), 'missing plugins/wave/skills/running-waves/SKILL.md')
+  return readFileSync(path, 'utf8')
+}
+
+function parseFrontmatter(text) {
+  const match = text.match(/^---\n([\s\S]*?)\n---\n/)
+  assert.ok(match, 'SKILL.md must open with a YAML frontmatter block')
+  const fields = {}
+  for (const line of match[1].split('\n')) {
+    const at = line.indexOf(': ')
+    assert.ok(at > 0, `frontmatter line is not a "key: value" pair: "${line}"`)
+    fields[line.slice(0, at)] = line.slice(at + 2)
+  }
+  return { fields, body: text.slice(match[0].length) }
 }
 
 const PART_ONE = [
@@ -94,3 +116,51 @@ test('gate-prompt.md orders the probe reverted and the review distrusts the repo
     'review-prompt.md must carry the phrase "Do not trust the report"',
   )
 })
+
+test('running-waves SKILL.md frontmatter parses and names the skill', () => {
+  const { fields } = parseFrontmatter(readSkill())
+  assert.equal(fields.name, 'running-waves')
+  assert.ok(fields.description, 'SKILL.md frontmatter carries no description')
+})
+
+test('the running-waves description states triggering conditions only', () => {
+  const { fields } = parseFrontmatter(readSkill())
+  assert.ok(
+    fields.description.startsWith('Use when'),
+    `description must start with "Use when", got "${fields.description.slice(0, 40)}"`,
+  )
+})
+
+test('the running-waves body stays under 750 words', () => {
+  const { body } = parseFrontmatter(readSkill())
+  const words = body.trim().split(/\s+/).length
+  assert.ok(words < 750, `SKILL.md body has ${words} words, the limit is 750`)
+})
+
+test('the reference table names every reference file and each one exists', () => {
+  const { body } = parseFrontmatter(readSkill())
+  const named = [...body.matchAll(/^\| `references\/([a-z-]+\.md)` \|/gm)].map((m) => m[1])
+  assert.deepEqual(
+    named.slice().sort(),
+    ALL.slice().sort(),
+    'the reference table must name exactly the ten reference files',
+  )
+  for (const name of named) {
+    assert.ok(
+      existsSync(join(REFERENCES, name)),
+      `the reference table names ${name}, which does not exist`,
+    )
+  }
+})
+
+for (const name of SCENARIOS) {
+  test(`pressure scenario ${name} exists and opens with a level-1 heading`, () => {
+    const path = join(SCENARIOS_DIR, name)
+    assert.ok(existsSync(path), `missing pressure scenario: ${name}`)
+    assert.match(
+      readFileSync(path, 'utf8'),
+      /^# \S/,
+      `${name} must open with a level-1 heading`,
+    )
+  })
+}
