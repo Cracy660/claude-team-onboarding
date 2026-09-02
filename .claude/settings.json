@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(codex exec:*)",
+      "Bash(codex resume:*)"
+    ],
+    "allow": [
+      "Bash(.claude/skills/dispatch/scripts/dispatch.sh:*)",
+      "Bash(bash .claude/skills/dispatch/scripts/dispatch.sh:*)"
+    ]
+  }
+}
