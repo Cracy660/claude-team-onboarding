@@ -102,7 +102,7 @@ case "$cmd" in
     # resume rejects --sandbox/--output-last-message and IGNORES piped stdin, so
     # the resume context must ride the prompt argument.
     SESSIONS_DIR="${CODEX_HOME:-$HOME/.codex}/sessions"
-    SESSION_FILE="$(grep -rl "$WT" "$SESSIONS_DIR" 2>/dev/null | sort | tail -1 || true)"
+    SESSION_FILE="$(grep -rlF "$WT" "$SESSIONS_DIR" 2>/dev/null | sort | tail -1 || true)"
     [ -n "$SESSION_FILE" ] || die "no codex session references $WT"
     SESSION_ID="$(basename "$SESSION_FILE" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || true)"
     [ -n "$SESSION_ID" ] || die "could not extract session id from: $SESSION_FILE"
