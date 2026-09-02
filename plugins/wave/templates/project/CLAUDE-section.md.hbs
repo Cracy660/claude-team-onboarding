@@ -1,0 +1,55 @@
+## Wave dispatch (controller-side)
+
+Roles: Codex implements (the repo root `AGENTS.md` is its contract) · Opus gates
+and reviews · the controller plans, dispatches, merges, and runs everything the
+sandbox blocks. The controller never implements. Briefs carry the task's
+statements and neighbours verbatim plus any BAN rules; standing conventions live
+in `AGENTS.md`.
+
+- **Dispatch only via the `dispatch` skill** (`.claude/skills/dispatch`): raw
+  `codex exec`/`resume` is permission-denied in `.claude/settings.json`. The
+  script enforces the sandbox (dedicated worktree, `--sandbox workspace-write`,
+  never `danger-full-access`, never the primary checkout), the env-file copy,
+  stdin termination, logging, and resume-by-session-ID; CLI trap details live in
+  the skill.
+- **Model choice**: `{{MODEL_DEFAULT}}`/medium for mechanical well-specified
+  tasks; `{{MODEL_JUDGMENT}}`/medium for multi-file or judgment tasks (the gate
+  and review net produces the quality, not the effort tier); raise to high only
+  after a BLOCKED report or two failed fix rounds. Never switch implementer
+  mid-tranche.
+- **Controller owns**: commits from worktrees (Codex can't reach the shared git
+  dir) and every leg the sandbox blocks (service-gated suites, `{{BUILD_CMD}}`);
+  a Codex green claim never covers them.
+- **Gates**: run as the `red-gate` subagent (`.claude/agents/red-gate.md`, the
+  refutation checklist's single home) on tasks that are high-risk, delete
+  behavior, or have multiple ways to fake Green. Exception: a mechanical deletion
+  with a named trap runs checklist-only; gates stay on refutation-critical and
+  behavioral tasks. Task review runs on everything.
+- **Red briefs**: carry the refutation checklist from `red-gate.md`; Red reports
+  must paste per-test failure output, never summarize.
+- **Plan snippets are untrusted input**: implementers transcribe them verbatim,
+  omissions and defects included, and the plan's own reference code is a defect
+  class gates and reviews must check. Any task touching a shared component
+  boundary keeps a gate or an explicit convention pointer in the brief.
+- **Build legs**: any diff that can break the bundler or the generated types gets
+  `{{BUILD_CMD}}` before review. The unit suite and the type-checker are blind to
+  that boundary, and after a route deletion the type-checker lies until the
+  generated types are rebuilt.
+{{#if REGISTRY}}
+- **Registry**: reads and flips go through the `registry` skill; destructive
+  writes only through its guarded script, which prints the full match list first
+  and appends the history row in the same transaction (a hook blocks raw UPDATE
+  and DELETE). Task branches carry CODE ONLY (hook-enforced) and flips happen in
+  the main checkout after rebase-and-merge: a database file does not merge.
+{{/if}}
+- **Concurrent sessions**: check the branch tip before every merge; a task branch
+  is rebased to its fork point and merged fast-forward only.
+- **Seal policy (cost)**: the default seal is the full end-to-end suite with
+  every external key masked, so any spec that would bill a provider skips. At a
+  wave close additionally run live only the specs relevant to that wave's tasks,
+  with retries 0: a deterministic failure must not re-bill. Full live sweeps only
+  on explicit owner call.
+{{#if EXTERNAL_KEYS}}
+  Keys to mask: `{{EXTERNAL_KEYS}}`. Masking one of them is not enough, an
+  unguarded spec bills whichever provider it can still reach.
+{{/if}}

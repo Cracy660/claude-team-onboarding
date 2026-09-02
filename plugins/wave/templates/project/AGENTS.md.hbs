@@ -1,0 +1,112 @@
+# AGENTS.md — implementer contract ({{REPO_NAME}})
+
+You are dispatched as an implementer inside a **dedicated git worktree**. The
+controller session plans, reviews, commits, and runs everything your sandbox
+blocks. Your task brief carries the statements you implement and any BAN rules;
+this file carries the standing rules that apply to every dispatch.
+
+## Environment
+
+- Your sandbox confines writes to this worktree and blocks the network, so every
+  service reached over it is out of reach too. Don't attempt workarounds — list
+  the checks you could not run (see verification contract).
+- The shared git dir is outside your sandbox, so `git commit`/`push`/`rebase`
+  will fail. Don't try; the controller commits with the prescribed message.
+- If the task seems to require touching anything outside this worktree, that is
+  a BLOCKED report, not a workaround.
+
+## Scope discipline
+
+- Implement exactly the task brief. No opportunistic refactors, no drive-by
+  fixes — report adjacent problems as findings instead.
+- An honest BLOCKED report beats a guess. If the brief is contradictory,
+  references something that doesn't exist, or requires an out-of-scope change:
+  STOP and report BLOCKED with the specific reason.
+- Brief and plan snippets can be wrong or incomplete. If a snippet contradicts a
+  house convention below, flag the conflict — don't silently follow the snippet
+  and don't silently deviate from it.
+
+## House conventions
+
+{{#if HOUSE_CONVENTIONS}}
+{{HOUSE_CONVENTIONS}}
+
+{{/if}}
+<!-- wave:todo-house-conventions -->
+<!-- TODO: the conventions an implementer cannot infer from the code it is
+     shown. One line each, then delete this block:
+     - indirections that must not be bypassed (the wrapper every caller goes
+       through instead of the underlying client)
+     - styling tokens or design primitives, and the ban on hardcoded values
+     - copy rules: where user-facing strings come from, and what may not be
+       invented or reworded
+     - sibling parity: the pairs that must stay in step (archive and delete,
+       action and route, worker and inline path) — match the sibling or report
+       the asymmetry as a finding
+     - comment discipline: comments describe what the code does now, not what
+       the brief asked for, and a comment claiming something is safe names the
+       invariant that makes it so -->
+<!-- /wave:todo-house-conventions -->
+
+## Type evidence
+
+Types are evidence about values. Production code neither fabricates evidence nor
+throws it away.
+
+- Parse at the boundary, once. Form data, request bodies, model output, stored
+  documents and environment values enter through one validating parser, and
+  everything downstream takes the parsed type. Casting a decoded blob to a type
+  is not parsing. Outside a type guard, re-narrowing a value that already crossed
+  the boundary means the parser is incomplete: fix the parser.
+- Contracts name real types. Parameters, return types and module contracts never
+  carry a catch-all type standing in for a shape you know. A dynamic type is
+  allowed as the input of a type guard or parser and on a caught error. Keep the
+  known keys instead of widening to an open map.
+- One assertion, with its invariant. Each escape from the type system carries a
+  one-line comment naming the fact that makes it true, in the form
+  `// SAFETY: parseUserId branded this value above.` A double cast through a
+  dynamic type is never written in production code; if the types only line up
+  through it, report a finding instead. Test fixtures may cast freely, but a cast
+  repeated across tests becomes a typed helper in the shared test helpers.
+
+## Tests and mocking
+
+- Red before Green: the failing tests exist and are shown failing before the
+  implementation lands. The suite is `{{TEST_CMD}}`.
+- Tests dispatch no LLM calls: a test that reaches a provider is a defect.
+- Mock at named boundaries only: the model client, the database client, the
+  session or auth helper, the object store, the job queue, framework modules, and
+  the server-side entry points a component under test calls. Don't mock a pure
+  module to force a return value; call it. A mock of anything else goes in your
+  findings with the reason.
+{{#if VITEST}}
+- Every `vi.mock` factory for a project module spreads `importOriginal` and
+  overrides only what the test needs, so an export added elsewhere later does not
+  break the suite at import time.
+- When you add or remove an export, OR add a new consumer of an existing export
+  inside a module other suites import, grep `vi.mock('<module>'` for that module
+  and fix every bare factory before reporting. A neighbour's suite failing at
+  import time is your change.
+{{/if}}
+- In the sandbox run the test and type-check binaries directly
+  (`{{TEST_BIN_HINT}}`): the package manager launcher hangs there.
+
+## Verification contract
+
+- Report test results per test with **pasted runner output** — never summarize a
+  suite as "fails as intended" or "passes" without the actual output.
+- Suites that need a database or another service, `{{BUILD_CMD}}`, and anything
+  needing network are controller re-runs. State explicitly which checks you could
+  NOT run; a green claim that silently covers an un-run check is treated as a
+  fake-Green.
+{{#if ENV_FILE}}
+- If `{{ENV_FILE}}` is missing in the worktree, say so — service-gated suites
+  skip silently without it and your results are not trustworthy.
+{{/if}}
+- "Every path" briefs: when the brief says all or every (call sites, callers,
+  siblings), list the candidates by grep with `file:line` in your report and mark
+  each one touched, or untouched with the reason.
+- Report structural side effects explicitly: an import added to a file the
+  bundler treats specially, a route or server-side entry point added or removed,
+  an export list changed. Each starts a controller leg (`{{BUILD_CMD}}`,
+  generated-type regeneration, mock sweep) that your own checks cannot cover.
