@@ -126,7 +126,7 @@ test('registry-guard passes a bare registry-write.sh invocation', (t) => {
   const ctx = setup(t)
   const r = ctx.hook(
     REGISTRY_GUARD,
-    `registry-write.sh spec_statement --set "status='approved'" --where "id='x'" --note "n"`,
+    `registry-write.sh spec_statement --set "status='approved'" --where "id='x'" --note "supersedes: UPDATE spec_statement SET status against docs/registry/registry.db"`,
   )
   assert.equal(r.status, 0, r.stderr)
 })
@@ -135,14 +135,17 @@ test('registry-guard passes a bash-invoked registry-write.sh', (t) => {
   const ctx = setup(t)
   const r = ctx.hook(
     REGISTRY_GUARD,
-    `bash .claude/skills/registry/scripts/registry-write.sh finding --delete --where "id='F1'"`,
+    `bash .claude/skills/registry/scripts/registry-write.sh finding --delete --where "note LIKE '%DELETE FROM finding%'" # against docs/registry/registry.db`,
   )
   assert.equal(r.status, 0, r.stderr)
 })
 
 test('registry-guard passes a tools/ script invocation', (t) => {
   const ctx = setup(t)
-  const r = ctx.hook(REGISTRY_GUARD, `python3 docs/registry/tools/ingest-review.py export.json`)
+  const r = ctx.hook(
+    REGISTRY_GUARD,
+    `python3 docs/registry/tools/ingest-review.py export.json --date 2026-09-03 # replays: DELETE FROM spec_statement against docs/registry/registry.db`,
+  )
   assert.equal(r.status, 0, r.stderr)
 })
 
@@ -161,6 +164,16 @@ test('registry-guard blocks the second segment even when the first is an exempt 
   const r = ctx.hook(
     REGISTRY_GUARD,
     `.claude/skills/registry/scripts/registry-write.sh spec_statement --set "x=1" --where "id='a'" --note "n" && sqlite3 docs/registry/registry.db "DELETE FROM spec_statement"`,
+  )
+  assert.equal(r.status, 2)
+  assert.match(r.stderr, /Blocked: raw destructive SQL against the registry/)
+})
+
+test('registry-guard blocks a tools/ path outside the registry dir', (t) => {
+  const ctx = setup(t)
+  const r = ctx.hook(
+    REGISTRY_GUARD,
+    `python3 other/tools/evil.py "DELETE FROM spec_statement" docs/registry/registry.db`,
   )
   assert.equal(r.status, 2)
   assert.match(r.stderr, /Blocked: raw destructive SQL against the registry/)

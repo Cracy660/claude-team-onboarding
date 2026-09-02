@@ -50,7 +50,7 @@ while IFS= read -r seg; do
     done
     case "$token" in
       *registry-write.sh) : ;;
-      */tools/*) : ;;
+      *"$REGISTRY_DIR"/tools/*) : ;;
       *) blocked=1 ;;
     esac
   fi
