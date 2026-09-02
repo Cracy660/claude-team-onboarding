@@ -191,6 +191,23 @@ test('new places the worktree, branch, log and model under knobs that differ fro
   assert.equal(argv[argv.indexOf('-c') + 1], 'model_reasoning_effort=low')
 })
 
+test('new resolves a relative worktree root to a normalized absolute path', (t) => {
+  // WAVE_WT_ROOT with a `..` in it (e.g. ../claude-team-onboarding-wt) must resolve
+  // to the same physical path Codex itself records as a session's cwd. A verbatim
+  // `$REPO_ROOT/$WT_ROOT_RAW` join leaves the `/../` segment in place, and a later
+  // `grep -F` for that literal text never matches Codex's own normalized cwd.
+  const ctx = setup(t, { waveEnv: { WT_ROOT: '../pool-wt' } })
+  const r = ctx.dispatch(['new', 'task-a', ctx.prompt])
+  assert.equal(r.status, 0, r.stderr)
+
+  const expected = realpathSync(join(ctx.root, '..', 'pool-wt', 'task-a'))
+  const calls = readFakeCodexLog(ctx.codexLog)
+  assert.equal(calls.length, 1)
+  const cd = calls[0].argv[calls[0].argv.indexOf('--cd') + 1]
+  assert.doesNotMatch(cd, /\/\.\.\//)
+  assert.equal(cd, expected)
+})
+
 test('new terminates stdin so codex cannot stall waiting for input', (t) => {
   const ctx = setup(t)
   assert.equal(ctx.dispatch(['new', 'task-a', ctx.prompt]).status, 0)
@@ -297,12 +314,17 @@ test('resume finds the session by worktree path and runs inside the worktree', (
 
 test("resume picks the session whose recorded cwd is this task's worktree, not the newest session", (t) => {
   const ctx = setup(t)
-  const createdA = ctx.dispatch(['new', 'task-a', ctx.prompt])
-  assert.equal(createdA.status, 0, createdA.stderr)
-  const wtA = createdA.stdout.match(/^dispatch: task-a -> (\S+) \(/m)[1]
-  const createdB = ctx.dispatch(['new', 'task-b', ctx.prompt])
-  assert.equal(createdB.status, 0, createdB.stderr)
-  const wtB = createdB.stdout.match(/^dispatch: task-b -> (\S+) \(/m)[1]
+  assert.equal(ctx.dispatch(['new', 'task-a', ctx.prompt]).status, 0)
+  assert.equal(ctx.dispatch(['new', 'task-b', ctx.prompt]).status, 0)
+
+  // Built independently of the script's own $WT string (never read back from its
+  // stdout): Codex records the OS-normalized cwd in its session files, and the
+  // default WT_ROOT here (../demo-wt) has a `..` in it, so this only holds once
+  // the script normalizes its own $WT the same way. Node's `join` already
+  // collapses `..` segments; `realpathSync` resolves the macOS tmpdir symlink the
+  // same way `makeTempRepo` already does for `ctx.root`.
+  const wtA = realpathSync(join(ctx.root, '..', 'demo-wt', 'task-a'))
+  const wtB = realpathSync(join(ctx.root, '..', 'demo-wt', 'task-b'))
 
   const UUID_A = '0198e0b4-1111-1111-1111-111111111111'
   const UUID_B = '0198e0b4-2222-2222-2222-222222222222'

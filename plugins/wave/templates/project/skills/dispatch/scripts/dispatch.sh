@@ -26,8 +26,17 @@ EFFORT_DEFAULT="${WAVE_EFFORT_DEFAULT:-medium}"
 MODEL_JUDGMENT="${WAVE_MODEL_JUDGMENT:-$MODEL_DEFAULT}"
 LOG_DIR_RAW="${WAVE_LOG_DIR:-.superpowers/dispatch-logs}"
 
-# Relative knobs resolve against the repo root, never against $PWD.
-resolve() { case "$1" in /*) printf '%s\n' "$1" ;; *) printf '%s\n' "$REPO_ROOT/$1" ;; esac; }
+# Relative knobs resolve against the repo root, never against $PWD, and are
+# normalized to a physical absolute path (no `/../`, no symlink component):
+# Codex records the OS-normalized cwd in its own session files, so `resume`'s
+# grep for the literal $WT text must compare against that same normalized
+# form, or a WAVE_WT_ROOT with a `..` in it never matches.
+resolve() {
+  case "$1" in
+    /*) mkdir -p "$1"; (cd "$1" && pwd -P) ;;
+    *) mkdir -p "$REPO_ROOT/$1"; (cd "$REPO_ROOT/$1" && pwd -P) ;;
+  esac
+}
 WT_ROOT="$(resolve "$WT_ROOT_RAW")"
 LOG_DIR="$(resolve "$LOG_DIR_RAW")"
 mkdir -p "$LOG_DIR"
