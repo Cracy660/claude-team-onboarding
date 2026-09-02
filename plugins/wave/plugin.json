@@ -1,0 +1,11 @@
+{
+  "name": "wave",
+  "version": "0.1.0",
+  "description": "Multi-model wave execution: Codex implements in a sandboxed worktree, adversarial gates and reviews, a SQLite statement registry as the spec",
+  "author": {
+    "name": "Jakub Adamski",
+    "email": "adamski.jakub@gmail.com"
+  },
+  "homepage": "https://github.com/Cracy660/claude-team-onboarding",
+  "license": "MIT"
+}

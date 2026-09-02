@@ -1,6 +1,6 @@
 {
   "name": "claude-team-onboarding",
-  "description": "Team onboarding plugin for Jakub's Claude Code curriculum (Polish)",
+  "description": "Claude Code plugins by Jakub Adamski: claude-team (Polish onboarding curriculum) and wave (multi-model wave execution with Codex, adversarial gates and a statement registry)",
   "owner": {
     "name": "Jakub Adamski",
     "url": "https://github.com/Cracy660"
@@ -10,6 +10,11 @@
       "name": "claude-team",
       "source": "./plugins/claude-team",
       "description": "Interactive Polish onboarding: TDD, git hygiene, portable hooks, stack setup, baseline plugins"
+    },
+    {
+      "name": "wave",
+      "source": "./plugins/wave",
+      "description": "Multi-model wave execution: Codex implements in a sandboxed worktree, adversarial gates and reviews, a SQLite statement registry as the spec"
     }
   ]
 }

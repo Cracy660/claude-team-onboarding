@@ -1,0 +1,19 @@
+{
+  "REPO_NAME": "demo",
+  "WT_ROOT": "../demo-wt",
+  "BRANCH_PREFIX": "codex",
+  "ENV_FILE": ".env.local",
+  "INSTALL_CMD": "pnpm install --prefer-offline --silent",
+  "MODEL_DEFAULT": "gpt-5.6-terra",
+  "EFFORT_DEFAULT": "medium",
+  "MODEL_JUDGMENT": "gpt-5.6-sol",
+  "LOG_DIR": ".superpowers/dispatch-logs",
+  "REGISTRY_DIR": "docs/registry",
+  "REGISTRY": true,
+  "TEST_CMD": "pnpm test",
+  "BUILD_CMD": "pnpm build",
+  "TEST_BIN_HINT": "./node_modules/.bin/vitest",
+  "VITEST": true,
+  "HOUSE_CONVENTIONS": "",
+  "EXTERNAL_KEYS": "OPENAI_API_KEY"
+}
