@@ -8,6 +8,12 @@ import { PLUGIN_ROOT } from './helpers.mjs'
 
 const MERGE = join(PLUGIN_ROOT, 'scripts', 'merge-settings.mjs')
 
+test('the init skill describes the merge the way the script behaves', () => {
+  const skill = readFileSync(join(PLUGIN_ROOT, 'skills', 'init', 'SKILL.md'), 'utf8')
+  assert.equal(skill.includes('creates the file as'), false)
+  assert.equal(skill.includes('under the same matcher'), true)
+})
+
 // The fragment /wave:init merges, kept here as a literal so this task does not
 // depend on templates/project/settings.json existing yet.
 const FRAGMENT = {

@@ -275,10 +275,10 @@ Then the settings merge:
 node "$PLUGIN_ROOT/scripts/merge-settings.mjs" .claude/settings.json "$PLUGIN_ROOT/templates/project/settings.json"
 ```
 
-It makes its own backup, creates the file as `{}` when absent, unions the allow and deny lists,
-appends hook entries whose command is not already there, preserves every other key, and prints
-one line per change. Read its output into the receipt. Do not open that file in an editor
-afterwards.
+It backs up an existing file only when something changes, creates the file when it is absent and
+the fragment adds something, unions the allow and deny lists, appends hook entries whose commands
+are not already there under the same matcher, preserves every other key, and prints one line per
+change. Read its output into the receipt. Do not open that file in an editor afterwards.
 
 Then make the shell files executable:
 

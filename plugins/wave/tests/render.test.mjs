@@ -125,6 +125,17 @@ test('exits 1 and writes nothing to stdout when --out is the last argument', () 
   }
 })
 
+test('exits 1 and writes nothing to stdout when --out is given an empty path', () => {
+  const r = renderText('hello\n', {}, ['--out', ''])
+  try {
+    assert.equal(r.status, 1)
+    assert.match(r.stderr, /--out needs a file path/)
+    assert.equal(r.stdout, '')
+  } finally {
+    rmSync(r.dir, { recursive: true, force: true })
+  }
+})
+
 test('writes nothing with --out when a knob is missing', () => {
   const r = renderText('{{MISSING}}\n', {}, ['--out', 'out.txt'])
   assert.equal(r.status, 1)
