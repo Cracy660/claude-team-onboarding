@@ -52,7 +52,7 @@ In plan-driven wave execution the approved plan plus risk-scaled adversarial gat
 - Sandboxing implementers is the controller's job, enforced programmatically in the dispatch command (dedicated git worktree, restrictive sandbox flags).
 - Process weight scales to risk: adversarial gates on tasks that are high-risk, deletion-shaped, or refutation-critical (multiple ways to fake Green); a standing refutation checklist may stand in for the gate on mechanical, named-trap deletions; task review on everything; batch adjacent small tasks into shared dispatches.
 - Commit-gate hooks don't cover subagent/worktree work — the controller re-runs full suites before any green claim.
-- The controller delegates, never debugs in-thread: a failing suite, database or build leg goes to a subagent that owns "make it green" and returns only root cause + outcome. Keep subagent reports, review verdicts, and diffs in workspace files, not the context window — carry forward only verdicts, findings, and file:line rulings. Context bloat is self-inflicted, not wave-inherent.
+- The controller delegates, never debugs in-thread: a failing e2e/DB/build leg goes to a subagent that owns "make it green" and returns only root cause + outcome. Keep subagent reports, review verdicts, and diffs in workspace files, not the context window — carry forward only verdicts, findings, and file:line rulings. Context bloat is self-inflicted, not wave-inherent.
 
 <!-- rule: append-bullets; section: "## Workflow" -->
 - Maintain `progress.md` (root) only when the project is big enough to warrant a running log — skip it for small features where per-feature plans carry their own history <!-- match: "only when the project is big enough" -->
@@ -62,14 +62,14 @@ In plan-driven wave execution the approved plan plus risk-scaled adversarial gat
 <!-- rule: add-if-absent; heading: "## Planning Workflow"; after: "## Multi-Model Execution" -->
 ## Planning Workflow
 Tool choice, from lightest to heaviest:
-1. **Desktop app** → root `spec.md` only (initial ideation).
+1. **Desktop app** → root `spec.md` only (initial ideation; uses desktop memory features CC lacks). No more desktop `plan.md`.
 2. **`/ultraplan`** → small projects. Takes the root spec, produces the plan. Fast, compact output.
 3. **Superpowers** → larger projects and non-trivial features. `brainstorming` → `writing-plans` → **`subagent-driven-development`** Per-feature files under `docs/superpowers/{specs,plans}/YYYY-MM-DD-<topic>*.md`.
 
 Brainstorming always comes first for superpowers work.
 
 <!-- rule: append-bullets; section: "## Planning Workflow" -->
-When superpowers files are created, they **supersede** the root `spec.md`: brainstorming refines the earlier ideation further, so the per-feature file becomes authoritative. The root stays as historical ideation context. <!-- match: "becomes authoritative" -->
+When superpowers files are created, they **supersede** the root `spec.md` — brainstorming refines the desktop ideation further, so the per-feature file becomes authoritative. The root stays as historical ideation context. <!-- match: "becomes authoritative" -->
 
 <!-- rule: add-if-absent; heading: "## Archival"; after: "## Documentation" -->
 ## Archival
@@ -77,7 +77,7 @@ When superpowers files are created, they **supersede** the root `spec.md`: brain
 - Small projects can skip the archive folder. Small edits don't need archival.
 
 <!-- rule: amend-bullet; section: "## Git"; bullet: "Commit cadence"; match: "the plan itself is the authorization" -->
-During plan-driven execution (following a root `plan.md` or a `docs/superpowers/plans/*` file), commit at each completed step WITHOUT waiting for explicit approval — the plan itself is the authorization. This overrides the Claude Code default "never commit without asking" within plan execution. Frequent small commits are fine and rarely an issue in practice.
+During plan-driven execution (following a root `plan.md` or `docs/superpowers/plans/*` file), commit at each completed step WITHOUT waiting for explicit approval — the plan itself is the authorization. This overrides the Claude Code default "never commit without asking" within plan execution. Frequent small commits are fine and rarely an issue in practice.
 
 <!-- rule: append-bullets; section: "## Git" -->
 <!-- note: the identity lines and the push rule belong to the recipient. Never rewrite, reorder or remove them. -->
