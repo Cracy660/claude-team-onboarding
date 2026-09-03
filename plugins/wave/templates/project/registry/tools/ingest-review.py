@@ -45,10 +45,23 @@ def main():
     when = args.date or date.today().isoformat()
     date.fromisoformat(when)  # fail fast on a malformed --date
 
-    payload = json.loads(Path(args.export).read_text(encoding="utf-8"))
+    try:
+        payload = json.loads(Path(args.export).read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"ingest-review: invalid export JSON: {exc}") from None
+    if not isinstance(payload, dict):
+        raise SystemExit("ingest-review: export must be a JSON object")
     verdicts = payload.get("verdicts") or {}
+    if not isinstance(verdicts, dict):
+        raise SystemExit("ingest-review: verdicts must be a JSON object")
     if not verdicts:
         raise SystemExit("ingest-review: the export carries no verdicts")
+    malformed = sorted(k for k, v in verdicts.items() if not isinstance(v, dict))
+    if malformed:
+        raise SystemExit(
+            "ingest-review: verdict must be a JSON object for: "
+            + ", ".join(malformed)
+        )
 
     con = sqlite3.connect(db_path)
     con.execute("PRAGMA busy_timeout=30000")
@@ -66,6 +79,17 @@ def main():
     if bad:
         con.close()
         raise SystemExit("ingest-review: unknown verdict for: " + ", ".join(bad))
+    empty_changes = sorted(
+        k
+        for k, v in verdicts.items()
+        if v["verdict"] == "change" and not (v.get("text") or "").strip()
+    )
+    if empty_changes:
+        con.close()
+        raise SystemExit(
+            "ingest-review: verdict change without replacement text: "
+            + ", ".join(empty_changes)
+        )
 
     counts = {"keep": 0, "change": 0, "remove": 0}
     try:
@@ -76,10 +100,6 @@ def main():
                 note = (v.get("note") or "").strip() or f"panel review: {verdict}"
                 if verdict == "change":
                     new_text = (v.get("text") or "").strip()
-                    if not new_text:
-                        raise SystemExit(
-                            f"ingest-review: verdict change without replacement text: {sid}"
-                        )
                     con.execute(
                         "UPDATE spec_statement SET text = ?, status = ? WHERE id = ?",
                         (new_text, status, sid),

@@ -123,6 +123,7 @@ let onlyOpen = false;
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} prog(); }
 function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
 function attr(t) { return esc(t).replace(/"/g, '&quot;'); }
+function jsarg(t) { return attr(JSON.stringify(t)); }
 
 function setVerdict(id, v) {
   state[id] = state[id] || {};
@@ -162,12 +163,12 @@ function prog() {
 function card(s) {
   const st = state[s.id] || {};
   const radios = ['keep', 'change', 'remove'].map(v =>
-    '<label><input type="radio" name="v-' + s.id + '" value="' + v + '"'
+    '<label><input type="radio" name="' + attr('v-' + s.id) + '" value="' + v + '"'
     + (st.verdict === v ? ' checked' : '')
-    + ' onchange="setVerdict(\\'' + s.id + '\\',\\'' + v + '\\')"> ' + v + '</label>'
+    + ' onchange="setVerdict(' + jsarg(s.id) + ',' + jsarg(v) + ')"> ' + v + '</label>'
   ).join('');
   return '<div class="card ' + (s.status === 'flagged' ? 'flagged' : '')
-    + (st.verdict ? ' done-' + st.verdict : '') + '" id="' + s.id + '">'
+    + (st.verdict ? ' done-' + st.verdict : '') + '" id="' + attr(s.id) + '">'
     + '<span class="sid">' + esc(s.id) + '</span>'
     + '<span class="tag' + (s.status === 'flagged' ? ' flagged' : '') + '">' + esc(s.status) + '</span>'
     + '<span class="tag">' + esc(s.basis) + '</span>'
@@ -177,9 +178,9 @@ function card(s) {
     + '<div class="acts">' + radios + '</div>'
     + '<textarea class="newtext" placeholder="replacement text (required for change)"'
     + ' style="display:' + (st.verdict === 'change' ? '' : 'none') + '"'
-    + ' onchange="setText(\\'' + s.id + '\\', this.value)">' + esc(st.text || '') + '</textarea>'
+    + ' onchange="setText(' + jsarg(s.id) + ', this.value)">' + esc(st.text || '') + '</textarea>'
     + '<input class="note" placeholder="note (optional)" value="' + attr(st.note || '')
-    + '" onchange="setNote(\\'' + s.id + '\\', this.value)">'
+    + '" onchange="setNote(' + jsarg(s.id) + ', this.value)">'
     + '</div>';
 }
 function render() {
