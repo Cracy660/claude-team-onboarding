@@ -514,3 +514,43 @@ test('malformed and non-object exports fail without a traceback', () => {
     reg.cleanup()
   }
 })
+
+const ABORT_SEED = `
+INSERT INTO spec_statement VALUES ('SP-zeta-01','zeta','First zeta text.','ruling','proposed',NULL,NULL);
+INSERT INTO spec_statement VALUES ('SP-zeta-99','zeta','Locked zeta text.','ruling','proposed',NULL,NULL);
+CREATE TRIGGER probe_block_update BEFORE UPDATE ON spec_statement
+WHEN NEW.id = 'SP-zeta-99'
+BEGIN SELECT RAISE(ABORT, 'probe: this row cannot be updated'); END;
+`
+
+test('a database error mid-export rolls back the verdicts before it', () => {
+  const reg = makeRegistry(ABORT_SEED)
+  try {
+    const file = join(reg.dir, 'export.json')
+    writeFileSync(
+      file,
+      JSON.stringify({
+        generated: '2026-09-02',
+        verdicts: {
+          'SP-zeta-01': { verdict: 'keep' },
+          'SP-zeta-99': { verdict: 'remove' },
+        },
+      })
+    )
+    const r = spawnSync('python3', [INGEST, file, '--registry-dir', reg.dir], { encoding: 'utf8' })
+    assert.equal(r.status, 1)
+    assert.doesNotMatch(r.stderr, /Traceback/)
+    assert.match(r.stderr, /ingest-review: database error, nothing was written/)
+    assert.equal(
+      query(reg.db, "SELECT status FROM spec_statement WHERE id='SP-zeta-01';"),
+      'proposed'
+    )
+    assert.equal(
+      query(reg.db, "SELECT status FROM spec_statement WHERE id='SP-zeta-99';"),
+      'proposed'
+    )
+    assert.equal(query(reg.db, 'SELECT count(*) FROM statement_history;'), '0')
+  } finally {
+    reg.cleanup()
+  }
+})

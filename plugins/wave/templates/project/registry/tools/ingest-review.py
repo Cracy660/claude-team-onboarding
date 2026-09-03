@@ -115,6 +115,10 @@ def main():
                     (sid, when, status, note, known[sid]),
                 )
                 counts[verdict] += 1
+    except sqlite3.Error as exc:
+        raise SystemExit(
+            f"ingest-review: database error, nothing was written: {exc}"
+        ) from None
     finally:
         con.close()
 
