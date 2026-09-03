@@ -72,8 +72,9 @@ line:
 Use the skill at <REPO>/plugins/wave/skills/init/SKILL.md. Follow it.
 ```
 
-Answer its knobs question with `defaults`, and give it three lines of house conventions so the
-TODO-block deletion is exercised. Accept its offer to ignore `node_modules/`.
+Answer its knobs question with `defaults`, but for house conventions give three lines including
+"Call the shared HTTP client wrapper, never fetch directly," so the TODO-block deletion is
+exercised. Accept its offer to ignore `node_modules/`.
 
 ## What to record, verbatim
 
@@ -100,8 +101,14 @@ written files, the permission deny rules missing, and no backup of the existing
 | wave.env complete | `grep -c '^WAVE_' <SCEN>/.claude/wave.env` | `10` |
 | Detection landed, env file | `grep '^WAVE_ENV_FILE=' <SCEN>/.claude/wave.env` | `WAVE_ENV_FILE=.env.local` |
 | Detection landed, install | `grep '^WAVE_INSTALL_CMD=' <SCEN>/.claude/wave.env` | the pnpm install command |
+| House conventions applied | `grep -c 'Call the shared HTTP client' <SCEN>/AGENTS.md` | `1` |
 | House conventions replaced the TODO | `grep -c 'wave:todo-house-conventions' <SCEN>/AGENTS.md` | `0` |
 | Log dir ignored | `grep -c '^\.superpowers/dispatch-logs/$' <SCEN>/.gitignore` | `1` |
 | Dependency dir ignored | `grep -c '^node_modules/$' <SCEN>/.gitignore` | `1`, and the setup did not put it there |
+
+In RED, no house conventions are given, so evaluate the "House conventions replaced the TODO" row
+differently: both marker lines are present (`grep -c 'wave:todo-house-conventions'
+<SCEN>/AGENTS.md` returns `2`) and the TODO comment body between them is not orphaned without its
+markers.
 
 A GREEN run that fails any row is a REFACTOR, not a pass.

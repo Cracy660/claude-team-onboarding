@@ -93,6 +93,10 @@ the Codex sandbox and the implementer needs the binary path instead.
 non-interactive.** Values the user already gave in their message count as answers; anything
 missing is asked. Taking defaults silently is the failure this step exists to prevent.
 
+**Asking means ending your turn with the question as your last message; the user's next message
+is the answer.** There is always a channel: your reply. A run that receives no answer stops at
+the question; defaults apply only to knobs the user explicitly said to default.
+
 Send one message. Defaults in brackets. Say that `defaults` accepts all of them.
 
 ```
@@ -164,19 +168,18 @@ by section.
 
 House conventions, on the rendered `${TMPDIR:-/tmp}/wave-AGENTS.md`:
 
-```bash
-# HOUSE_CONVENTIONS is non-empty: drop the TODO block entirely
-sed -i.bak '/<!-- wave:todo-house-conventions -->/,/<!-- \/wave:todo-house-conventions -->/d' "${TMPDIR:-/tmp}/wave-AGENTS.md" && rm "${TMPDIR:-/tmp}/wave-AGENTS.md.bak"
+- `HOUSE_CONVENTIONS` is non-empty: drop the TODO block entirely, then squeeze the blank-line gap
+  the deletion leaves.
 
-# HOUSE_CONVENTIONS is empty: keep the TODO text, drop only the two marker lines
-sed -i.bak '/wave:todo-house-conventions/d' "${TMPDIR:-/tmp}/wave-AGENTS.md" && rm "${TMPDIR:-/tmp}/wave-AGENTS.md.bak"
-```
+  ```bash
+  sed -i.bak '/<!-- wave:todo-house-conventions -->/,/<!-- \/wave:todo-house-conventions -->/d' "${TMPDIR:-/tmp}/wave-AGENTS.md" && rm "${TMPDIR:-/tmp}/wave-AGENTS.md.bak"
+  sed -i.bak '/^$/N;/^\n$/D' "${TMPDIR:-/tmp}/wave-AGENTS.md" && rm "${TMPDIR:-/tmp}/wave-AGENTS.md.bak"
+  ```
 
-Run exactly one of those two, then squeeze the blank-line gap the deletion leaves:
-
-```bash
-sed -i.bak '/^$/N;/^\n$/D' "${TMPDIR:-/tmp}/wave-AGENTS.md" && rm "${TMPDIR:-/tmp}/wave-AGENTS.md.bak"
-```
+- `HOUSE_CONVENTIONS` is empty: leave the file untouched. The TODO block stays with both marker
+  lines intact, so a later `/wave:init` run can find it and replace it once conventions are given.
+  Do not strip the markers on their own: an orphaned TODO body with no markers is invisible to
+  that later run.
 
 `-i.bak` is the form that works on both BSD and GNU sed.
 
@@ -368,6 +371,7 @@ for the user to review and commit.
 | "The tree is dirty, I should stop and ask" | Report it in one line and continue. Refusing on a dirty tree is not in this skill. |
 | "The rendered AGENTS.md is better than theirs, replace it" | Append the missing sections only. Their sections are their conventions. |
 | "This ran non-interactively, so I took the skill's stated defaults" | Ask anyway. Values the user already gave in the request count as answers; anything else still gets asked. Taking defaults silently is the failure step 3 exists to prevent. |
+| "There is no channel to ask and block, so I take the defaults" | Your reply is the channel; stopping with the question is the correct end of this turn, not a failure to finish. |
 
 ## When something fails
 
