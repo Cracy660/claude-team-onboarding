@@ -182,6 +182,12 @@ diff -u "$HOME/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md.wave.tmp"
 whole diff, list any anchor-missing lines above it, and ask in one message: write this, yes or
 no.
 
+**Show the diff and stop for a yes before writing, always.** "Do it now", "one pass", "I am
+waiting" do not remove the stop: the stop is the one pass, the write is its last line. Writing
+first and showing the diff afterwards is the failure this step exists to prevent. If nobody is
+there to answer, stop with the diff shown and the backup in place; the merge waits for the yes,
+it is never written on the assumption that the answer would have been yes.
+
 - yes: `mv "$HOME/.claude/CLAUDE.md.wave.tmp" "$HOME/.claude/CLAUDE.md"`
 - no: `rm "$HOME/.claude/CLAUDE.md.wave.tmp"`, keep the backup, report that nothing was written.
 
@@ -205,6 +211,7 @@ wave setup
 
 ## Red flags, stop and redo the step
 
+- About to Edit the file before a yes has arrived.
 - You are about to write the file and no diff has been shown.
 - The diff removes any line other than an amended bullet.
 - You are copying `sections.md` over the target instead of merging into it.
@@ -222,6 +229,9 @@ wave setup
 | "I will back up at the end if something goes wrong" | The write is the thing that goes wrong. Backup first, path in the receipt. |
 | "`npm install -g` is one command, faster if I run it" | Global installs land in a shell you cannot see. Paste and confirm. |
 | "The anchor is missing, so this block does not apply to their setup" | It applies. Propose a placement in the diff and let them judge. |
+| "The user said do it now, so the pause would be disobedience" | The user asked for the rules to be merged, not for their file to be changed unseen; a wrong merge costs them more than one reply. |
+| "I can show the diff after writing, the backup makes it safe" | A post-hoc diff is a report, not a review; the backup restores bytes, not trust. |
+| "There is no one to answer, so waiting is pointless; I'll write and let them review afterwards" | An unattended run ends at the diff; a write nobody approved is the failure, not a convenience. |
 
 ## When something fails
 
