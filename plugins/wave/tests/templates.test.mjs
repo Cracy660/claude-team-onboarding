@@ -201,6 +201,27 @@ test('the registry skill uses one database and the guarded write CLI', () => {
   assert.ok(md.includes('spec_statement'), 'the statement table is missing')
 })
 
+test('the two project skills carry no em-dash', () => {
+  for (const path of ['skills/dispatch/SKILL.md', 'skills/registry/SKILL.md']) {
+    const md = readProject(path)
+    assert.ok(!md.includes('—'), `${path} carries an em-dash`)
+  }
+})
+
+test('the registry skill resolves the registry directory from wave.env', () => {
+  const md = readProject('skills/registry/SKILL.md')
+  assert.ok(!md.includes('docs/registry'), 'the registry skill hardcodes the default directory')
+  const sourced = md.indexOf('source .claude/wave.env')
+  const used = md.indexOf('$WAVE_REGISTRY_DIR')
+  assert.ok(sourced > 0 && sourced < used, 'the registry directory is used before wave.env is sourced')
+})
+
+test('the registry skill says the hook is not a boundary', () => {
+  const md = readProject('skills/registry/SKILL.md')
+  assert.ok(md.includes('.read'), 'the registry skill does not name the unseen .read form')
+  assert.ok(md.includes('not as a boundary'), 'the registry skill does not disclaim a boundary')
+})
+
 test('the registry README carries the contract clauses and the projection rule', () => {
   const md = readProject('registry/README.md')
   assert.ok(md.includes('spec-exec.db'), 'the projection is missing')

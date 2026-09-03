@@ -34,7 +34,7 @@ source .claude/wave.env
 .claude/skills/dispatch/scripts/dispatch.sh clean <task-id>
 ```
 
-Runs take many minutes — invoke via Bash with `run_in_background: true` and read
+Runs take many minutes: invoke via Bash with `run_in_background: true` and read
 the log under `WAVE_LOG_DIR` (`<task-id>.<timestamp>.log`); the final message
 lands in `<task-id>.last.md`.
 
@@ -60,7 +60,7 @@ lands in `<task-id>.last.md`.
 
 - Write the prompt file: the task's statements and neighbours verbatim, BAN
   rules, and the refutation checklist for deletion-shaped tasks. Standing
-  conventions live in `AGENTS.md` — do not re-type them into the brief.
+  conventions live in `AGENTS.md`, so do not re-type them into the brief.
 - Commit the worktree's work. Codex cannot reach the shared git dir.
 - Re-run the legs the sandbox blocks: service-gated suites and the build. A Codex
   green claim never covers them.

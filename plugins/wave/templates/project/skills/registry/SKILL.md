@@ -1,6 +1,6 @@
 ---
 name: registry
-description: Use when reading or changing spec statements and findings — pulling a statement and its neighbours for a brief, checking what a wave still owns, listing open findings, or flipping rows after a merge. Writes go through the guarded script; raw UPDATE and DELETE are blocked by a hook.
+description: Use when reading or changing spec statements and findings: pulling a statement and its neighbours for a brief, checking what a wave still owns, listing open findings, or flipping rows after a merge. Writes go through the guarded script; raw UPDATE and DELETE are blocked by a hook.
 ---
 
 # Registry access
@@ -19,13 +19,14 @@ class, severity, status, description, impact, code_locus)` with `provenance`,
 ## Canonical reads
 
 ```bash
-REG="$(git rev-parse --show-toplevel)/docs/registry"   # your WAVE_REGISTRY_DIR
+source .claude/wave.env
+REG="$(git rev-parse --show-toplevel)/$WAVE_REGISTRY_DIR"
 
 # One statement:
 sqlite3 -header "$REG/registry.db" \
   "SELECT id, area, stage, status, text FROM spec_statement WHERE id='<ID>';"
 
-# Neighbours, same area — briefs carry these verbatim:
+# Neighbours, same area (briefs carry these verbatim):
 sqlite3 -header "$REG/registry.db" \
   "SELECT id, stage, text FROM spec_statement \
    WHERE area=(SELECT area FROM spec_statement WHERE id='<ID>') ORDER BY id;"
@@ -34,7 +35,7 @@ sqlite3 -header "$REG/registry.db" \
 sqlite3 "$REG/registry.db" \
   "SELECT stage, COUNT(*) FROM spec_statement GROUP BY stage;"
 
-# What a wave still owns — the close invariant is 0:
+# What a wave still owns (the close invariant is 0):
 sqlite3 "$REG/registry.db" \
   "SELECT COUNT(*) FROM spec_statement WHERE stage='W<N>';"
 
@@ -50,7 +51,7 @@ sqlite3 -header "$REG/spec-exec.db" \
   "SELECT id, area, stage, text, code_locus FROM spec WHERE id='<ID>';"
 ```
 
-## Writes — guarded script only
+## Writes: guarded script only
 
 Raw `UPDATE` and `DELETE` against the database files is blocked by a PreToolUse
 hook. The script prints the full match list before touching anything, aborts on
@@ -58,6 +59,10 @@ zero matches, refuses a write without `--where`, appends the history row in the
 same transaction as the update, and regenerates `spec-exec.db` after any
 `spec_statement` write. `--note` is required for an update to `spec_statement`
 or `finding`: it becomes the history row's note.
+
+The hook matches SQL shapes in the command string only. SQL that arrives through a shell
+redirect or a `.read` passes it unseen, so treat it as defense in depth against a careless
+agent, not as a boundary.
 
 ```bash
 # Flip statements to parity after the merge is verified:
@@ -71,7 +76,7 @@ or `finding`: it becomes the history row's note.
   --set "status='fixed'" --where "id='F-W3-01'" \
   --note "fixed in task 7, controller re-ran the suite"
 
-# Delete — rare, needs an explicit ruling:
+# Delete (rare, needs an explicit ruling):
 .claude/skills/registry/scripts/registry-write.sh spec_statement \
   --delete --where "id='SP-picker-99'"
 ```

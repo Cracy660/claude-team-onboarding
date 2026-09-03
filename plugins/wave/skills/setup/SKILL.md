@@ -31,8 +31,8 @@ byte.
 - Plugin root: `${CLAUDE_PLUGIN_ROOT}` when it is set, else the directory three levels above this
   file.
 - Sections file: `<plugin root>/templates/claude-md/sections.md`.
-- Target: `~/.claude/CLAUDE.md`. If the user names a different file, use that path and say which
-  file you touched in the receipt.
+- Target: `~/.claude/CLAUDE.md`, held in `TARGET` from step 3b on. If the user names a different
+  file, set `TARGET` to that path and say which file you touched in the receipt.
 
 ## Step 1: Codex preflight
 
@@ -92,7 +92,8 @@ Only on an explicit yes; then go to 3e with an empty original.
 ### 3b. Back up, once per run
 
 ```bash
-BAK="$HOME/.claude/CLAUDE.md.pre-wave-$(date +%Y%m%d-%H%M%S).bak"; cp "$HOME/.claude/CLAUDE.md" "$BAK"; echo "$BAK"
+TARGET="$HOME/.claude/CLAUDE.md"   # or the file the user named, see Paths
+BAK="$TARGET.pre-wave-$(date +%Y%m%d-%H%M%S).bak"; cp "$TARGET" "$BAK"; echo "$BAK"
 ```
 
 Keep the printed path for the receipt. If a `CLAUDE.md.pre-wave-*.bak` already exists from this
@@ -120,7 +121,7 @@ the reminder that the recipient's identity lines and push rule stay untouched.
 | `add-if-absent` | `heading`, `after` | A heading matching `heading` is already in the file: change nothing, report `left`. Otherwise insert one blank line and then the body verbatim, after the last non-blank line of the section whose heading matches `after`. Report `added`. |
 | `amend-bullet` | `section`, `bullet`, `match` | The section whose heading matches `section` already contains the literal `match`: change nothing, report `left`. Otherwise find the first line in that section that starts with `- ` and whose text after `- ` starts with `bullet`, and append the body to the end of that one line: `. ` before it when the line does not already end in `.`, `;` or `:`, one space when it does. Change no other line. Report `amended`. |
 | `append-bullets` | `section` | For each item line of the body, in order, a line starting with `<!-- note:` being an annotation rather than an item: the section whose heading matches `section` already contains that item's `match` literal, report `left`; otherwise append the item, without its trailing match comment, after the last non-blank line of that section. An item that starts with `- ` is a bullet and is appended directly. An item that does not is a paragraph, so put one blank line before it and it renders as its own paragraph rather than joining the list above. Report `added`. |
-| `never-touch` | `sections` | Do not modify the named sections, their content or their position. The body is empty. |
+| `never-touch` | `sections`, a comma-separated list of headings | Split the value on the comma and the space that follows it. Do not modify the named sections, their content or their position. The body is empty. |
 
 Every heading that no rule names is never touched either.
 
@@ -155,7 +156,7 @@ can paste it by hand.
 
 ### 3e. Build the result
 
-Apply the rules to a copy and write it to `~/.claude/CLAUDE.md.wave.tmp`. Exactly four kinds of
+Apply the rules to a copy and write it to `$TARGET.wave.tmp`. Exactly four kinds of
 edit may reach that file:
 
 1. whole blocks inserted after an anchor section, from `add-if-absent`
@@ -175,7 +176,7 @@ template the diff removes exactly those two lines.
 ### 3f. Diff, then write
 
 ```bash
-diff -u "$HOME/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md.wave.tmp"
+diff -u "$TARGET" "$TARGET.wave.tmp"
 ```
 
 `diff` exits 1 when the files differ. That is the expected case here, not an error. Show the
@@ -188,8 +189,8 @@ first and showing the diff afterwards is the failure this step exists to prevent
 there to answer, stop with the diff shown and the backup in place; the merge waits for the yes,
 it is never written on the assumption that the answer would have been yes.
 
-- yes: `mv "$HOME/.claude/CLAUDE.md.wave.tmp" "$HOME/.claude/CLAUDE.md"`
-- no: `rm "$HOME/.claude/CLAUDE.md.wave.tmp"`, keep the backup, report that nothing was written.
+- yes: `mv "$TARGET.wave.tmp" "$TARGET"`
+- no: `rm "$TARGET.wave.tmp"`, keep the backup, report that nothing was written.
 
 ## Step 4: receipt
 

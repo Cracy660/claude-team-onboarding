@@ -38,6 +38,24 @@ test('both commands carry a description frontmatter and invoke their skill', () 
   }
 })
 
+test('the setup skill addresses the target file through one variable', () => {
+  const md = readFileSync(join(PLUGIN_ROOT, 'skills', 'setup', 'SKILL.md'), 'utf8')
+  const code = [...md.matchAll(/^```[^\n]*\n([\s\S]*?)^```$/gm)].map((match) => match[1]).join('\n')
+  const homeTarget = '$HOME/.claude/CLAUDE.md'
+  assert.equal(code.split(homeTarget).length - 1, 1, 'the default target must occur once in code')
+  assert.ok(
+    code.split('\n').some((line) => line.startsWith('TARGET=') && line.includes(homeTarget)),
+    'the default target must be assigned on a TARGET line',
+  )
+  const tempCount = md.split('.wave.tmp').length - 1
+  const variableTempCount = md.split('$TARGET.wave.tmp').length - 1
+  assert.equal(tempCount, variableTempCount, 'every temporary path must use TARGET')
+  assert.ok(variableTempCount >= 3, 'expected at least three TARGET temporary paths')
+  const row = md.split('\n').find((line) => line.startsWith('| `never-touch` |'))
+  assert.ok(row?.includes('comma-separated'), 'the never-touch row does not define a list')
+  assert.ok(row?.includes('Split the value'), 'the never-touch row does not say to split the value')
+})
+
 test('makeTempRepo builds a git repo with exactly one commit', () => {
   const repo = makeTempRepo()
   try {

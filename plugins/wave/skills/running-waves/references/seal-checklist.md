@@ -51,8 +51,9 @@ hint, and record the ruling reference next to the result. Zero unexplained hits.
 No statement may still be staged to this wave:
 
 ```bash
+source .claude/wave.env
 sqlite3 "$WAVE_REGISTRY_DIR/registry.db" \
-  "SELECT COUNT(*) FROM spec_statement WHERE stage='W3';"
+  "SELECT COUNT(*) FROM spec_statement WHERE stage='W<N>';"
 # expected: 0
 ```
 
@@ -66,6 +67,7 @@ Every statement the wave touched has a `statement_history` row for each status c
 each carrying the text as it stood before the change:
 
 ```bash
+source .claude/wave.env
 sqlite3 "$WAVE_REGISTRY_DIR/registry.db" \
   "SELECT statement_id, date, status FROM statement_history
    WHERE date >= '<wave start date>' ORDER BY statement_id, date;"

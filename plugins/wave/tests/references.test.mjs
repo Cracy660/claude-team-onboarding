@@ -109,6 +109,23 @@ test('brief-template.md opens the implementer on the conventions file', () => {
   )
 })
 
+test('seal-checklist.md sources wave.env before every registry query and hardcodes no wave number', () => {
+  const text = readReference('seal-checklist.md')
+  assert.ok(!text.includes("stage='W3'"), 'seal-checklist.md hardcodes wave 3')
+  assert.ok(text.includes("stage='W<N>'"), 'seal-checklist.md does not carry the generic wave stage')
+  const registryBlocks = text
+    .split(/^```.*$/m)
+    .filter((block) => block.includes('$WAVE_REGISTRY_DIR'))
+  assert.ok(registryBlocks.length >= 2, 'expected at least two registry command blocks')
+  for (const block of registryBlocks) {
+    assert.ok(
+      block.indexOf('source .claude/wave.env') >= 0 &&
+        block.indexOf('source .claude/wave.env') < block.indexOf('$WAVE_REGISTRY_DIR'),
+      'a registry query uses WAVE_REGISTRY_DIR before sourcing wave.env',
+    )
+  }
+})
+
 test('gate-prompt.md orders the probe reverted and the review distrusts the report', () => {
   assert.ok(readReference('gate-prompt.md').includes('revert'), 'gate-prompt.md never says revert')
   assert.ok(

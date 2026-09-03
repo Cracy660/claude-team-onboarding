@@ -82,6 +82,14 @@ test('the preamble opens no block of its own', () => {
   )
 })
 
+test('the preamble says the never-touch value is a comma-separated list', () => {
+  const first = lines.findIndex((line) => line.startsWith('<!-- rule:'))
+  assert.ok(
+    lines.slice(0, first).some((line) => line.includes('never-touch') && line.includes('comma-separated')),
+    'the never-touch preamble does not define its value as comma-separated',
+  )
+})
+
 test('every rule comment matches the grammar', () => {
   assert.ok(blocks.length >= 10, `expected at least ten blocks, found ${blocks.length}`)
   for (const block of blocks) {

@@ -22,8 +22,9 @@ always double quoted and never contain a double quote. Four forms:
 - `append-bullets`, key `section`: append each item line of the body, without its
   trailing match comment, at the end of that section, skipping any item whose
   match literal is already there.
-- `never-touch`, key `sections`: those sections are never modified and never
-  reordered. The body is empty.
+- `never-touch`, key `sections`, whose value is a comma-separated list of
+  headings (separator: a comma and a space): none of those sections is modified
+  or reordered. The body is empty.
 
 A body line that is only a `<!-- note: … -->` comment is an annotation for
 whoever reads this file. It is never an item, and it is never written into the
