@@ -11,6 +11,7 @@ artifact viewers block the download the export button needs.
 
 import argparse
 import json
+import re
 import sqlite3
 from datetime import date
 from pathlib import Path
@@ -234,12 +235,17 @@ render();
 
 
 def build(stmts, areas, stamp):
-    return (
-        PAGE.replace("__DATA__", js(stmts))
-        .replace("__AREAS__", js(areas))
-        .replace("__STAMP__", js(stamp))
-        .replace("__STAMP_TXT__", stamp)
-        .replace("__COUNT__", str(len(stmts)))
+    replacements = {
+        "__DATA__": js(stmts),
+        "__AREAS__": js(areas),
+        "__STAMP__": js(stamp),
+        "__STAMP_TXT__": stamp,
+        "__COUNT__": str(len(stmts)),
+    }
+    return re.sub(
+        r"__DATA__|__AREAS__|__STAMP__|__STAMP_TXT__|__COUNT__",
+        lambda match: replacements[match.group(0)],
+        PAGE,
     )
 
 

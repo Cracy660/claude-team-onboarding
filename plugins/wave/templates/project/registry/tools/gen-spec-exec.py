@@ -10,6 +10,7 @@ Registry contract clause 3: execution agents read spec-exec.db only.
 
 import argparse
 import datetime
+import os
 import pathlib
 import sqlite3
 
@@ -46,29 +47,40 @@ def main():
     src.close()
 
     out = root / "spec-exec.db"
-    if out.exists():
-        out.unlink()
-    dst = sqlite3.connect(out)
-    dst.execute(
-        "CREATE TABLE spec (id TEXT PRIMARY KEY, area TEXT, text TEXT, "
-        "code_locus TEXT, stage TEXT)"
-    )
-    dst.execute(
-        "CREATE TABLE meta (generated TEXT, source TEXT, statement_count INTEGER, "
-        "contract TEXT)"
-    )
-    dst.executemany("INSERT INTO spec VALUES (?,?,?,?,?)", rows)
-    dst.execute(
-        "INSERT INTO meta VALUES (?,?,?,?)",
-        (
-            datetime.date.today().isoformat(),
-            "registry.db (spec_statement, status=approved)",
-            len(rows),
-            "registry README clause 3: execution agents read this file only",
-        ),
-    )
-    dst.commit()
-    dst.close()
+    tmp = root / "spec-exec.db.tmp"
+    if tmp.exists():
+        tmp.unlink()
+    dst = None
+    try:
+        dst = sqlite3.connect(tmp)
+        dst.execute(
+            "CREATE TABLE spec (id TEXT PRIMARY KEY, area TEXT, text TEXT, "
+            "code_locus TEXT, stage TEXT)"
+        )
+        dst.execute(
+            "CREATE TABLE meta (generated TEXT, source TEXT, statement_count INTEGER, "
+            "contract TEXT)"
+        )
+        dst.executemany("INSERT INTO spec VALUES (?,?,?,?,?)", rows)
+        dst.execute(
+            "INSERT INTO meta VALUES (?,?,?,?)",
+            (
+                datetime.date.today().isoformat(),
+                "registry.db (spec_statement, status=approved)",
+                len(rows),
+                "registry README clause 3: execution agents read this file only",
+            ),
+        )
+        dst.commit()
+        dst.close()
+        dst = None
+        os.replace(tmp, out)
+    except Exception:
+        if dst is not None:
+            dst.close()
+        if tmp.exists():
+            tmp.unlink()
+        raise
 
     print(f"spec-exec.db regenerated: {len(rows)} statements")
 

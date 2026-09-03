@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { runInNewContext } from 'node:vm'
@@ -88,6 +88,76 @@ test('projection carries no ban_entry table', () => {
   }
 })
 
+test('a failed regeneration leaves the previous projection in place', () => {
+  const reg = makeRegistry(PROJECTION_SEED)
+  try {
+    const proj = join(reg.dir, 'spec-exec.db')
+    const first = spawnSync('python3', [GEN_SPEC, '--registry-dir', reg.dir], {
+      encoding: 'utf8',
+    })
+    assert.equal(first.status, 0, first.stderr)
+    assert.equal(query(proj, 'SELECT id FROM spec;'), 'SP-alpha-01')
+
+    const inject = join(reg.dir, 'inject')
+    mkdirSync(inject)
+    writeFileSync(
+      join(inject, 'sitecustomize.py'),
+      `import sqlite3
+
+real_connect = sqlite3.connect
+
+class ConnectionProxy:
+    def __init__(self, connection):
+        self.connection = connection
+
+    def executemany(self, *args, **kwargs):
+        raise RuntimeError("injected failure")
+
+    def __getattr__(self, name):
+        return getattr(self.connection, name)
+
+def connect(path, *args, **kwargs):
+    connection = real_connect(path, *args, **kwargs)
+    if "spec-exec" in str(path):
+        return ConnectionProxy(connection)
+    return connection
+
+sqlite3.connect = connect
+`
+    )
+    const failed = spawnSync('python3', [GEN_SPEC, '--registry-dir', reg.dir], {
+      encoding: 'utf8',
+      env: { ...process.env, PYTHONPATH: inject },
+    })
+    assert.notEqual(failed.status, 0)
+    assert.match(failed.stderr, /injected failure/)
+    assert.equal(query(proj, 'SELECT id FROM spec;'), 'SP-alpha-01')
+    assert.deepEqual(
+      readdirSync(reg.dir).filter((name) => name.endsWith('.tmp')),
+      []
+    )
+  } finally {
+    reg.cleanup()
+  }
+})
+
+test('a stale temp file from an interrupted run does not stop regeneration', () => {
+  const reg = makeRegistry(PROJECTION_SEED)
+  try {
+    const tmp = join(reg.dir, 'spec-exec.db.tmp')
+    writeFileSync(tmp, 'not a database')
+    const r = spawnSync('python3', [GEN_SPEC, '--registry-dir', reg.dir], { encoding: 'utf8' })
+    assert.equal(r.status, 0, r.stderr)
+    assert.equal(query(join(reg.dir, 'spec-exec.db'), 'SELECT id FROM spec;'), 'SP-alpha-01')
+    assert.deepEqual(
+      readdirSync(reg.dir).filter((name) => name.endsWith('.tmp')),
+      []
+    )
+  } finally {
+    reg.cleanup()
+  }
+})
+
 test('schema refuses a basis outside the allowed set', () => {
   const reg = makeRegistry()
   try {
@@ -158,6 +228,21 @@ test('panel without the flag carries every statement', () => {
     assert.match(html, /<a[^>]*download|\.download\s*=/)
     assert.match(html, /localStorage/)
     assert.match(html, /navigator\.clipboard/)
+  } finally {
+    reg.cleanup()
+  }
+})
+
+test('a statement whose text carries a sentinel word reaches the panel data untouched', () => {
+  const text = 'Carries __COUNT__ and __STAMP__ and __AREAS__ literally.'
+  const reg = makeRegistry(
+    `INSERT INTO spec_statement VALUES ('SP-alpha-01','alpha','${text}','ruling','proposed',NULL,NULL);`
+  )
+  try {
+    const html = panel(reg.dir, [])
+    const data = JSON.parse(html.match(/^const DATA = (.*);$/m)[1])
+    assert.equal(data[0].text, text)
+    assert.match(html, />1 statements &middot; generated /)
   } finally {
     reg.cleanup()
   }
