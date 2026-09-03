@@ -21,7 +21,13 @@ REGISTRY_DIR="${WAVE_REGISTRY_DIR:-}"
 BRANCH_PREFIX="${WAVE_BRANCH_PREFIX:-codex}"
 
 # Resolve the repo the commit targets: honor `git -C <path>` if present.
-target="$(printf '%s' "$cmd" | sed -nE 's/.*git -C ([^ ]+) .*/\1/p')"
+target="$(printf '%s' "$cmd" | sed -nE 's/.*git -C "([^"]+)" .*/\1/p')"
+if [ -z "$target" ]; then
+  target="$(printf '%s' "$cmd" | sed -nE "s/.*git -C '([^']+)' .*/\\1/p")"
+fi
+if [ -z "$target" ]; then
+  target="$(printf '%s' "$cmd" | sed -nE 's/.*git -C ([^ ]+) .*/\1/p')"
+fi
 target="${target:-.}"
 
 gitdir="$(git -C "$target" rev-parse --git-dir 2>/dev/null)" || exit 0

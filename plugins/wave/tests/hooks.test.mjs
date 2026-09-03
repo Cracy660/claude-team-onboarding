@@ -46,6 +46,16 @@ test('code-only-branch blocks a registry commit from a linked worktree', (t) => 
   assert.match(r.stderr, /Blocked: task branches carry CODE ONLY/)
 })
 
+test('code-only-branch blocks a registry commit from a worktree whose path carries a space', (t) => {
+  const ctx = setup(t)
+  const wt = join(ctx.root, '..', 'wt dir', 'task-space')
+  ctx.run('git', ['worktree', 'add', wt, '-b', 'codex/task-space', 'HEAD'])
+  ctx.stage(wt, 'docs/registry/registry.db', 'flipped in the spaced worktree\n')
+  const r = ctx.hook(CODE_ONLY, `git -C "${wt}" commit -m "flip"`)
+  assert.equal(r.status, 2)
+  assert.match(r.stderr, /Blocked: task branches carry CODE ONLY/)
+})
+
 test('code-only-branch blocks a registry commit when the registry directory carries a regex metacharacter', (t) => {
   const ctx = setup(t, {
     waveEnv: { BRANCH_PREFIX: 'codex', REGISTRY_DIR: 'docs/reg+istry' },

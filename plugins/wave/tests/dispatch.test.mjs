@@ -97,6 +97,7 @@ test('the rendered wave.env sources cleanly when a path knob carries a space', (
   const knobs = {
     ...JSON.parse(readFileSync(join(PLUGIN_ROOT, 'tests/fixtures/knobs.sample.json'), 'utf8')),
     WT_ROOT: '../My Projects/demo-wt',
+    ENV_FILE: 'env files/.env.local',
     LOG_DIR: 'logs/dispatch logs',
     REGISTRY_DIR: 'docs/my registry',
   }
@@ -108,11 +109,14 @@ test('the rendered wave.env sources cleanly when a path knob carries a space', (
   writeFileSync(waveEnv, rendered)
   const r = spawnSync(
     'bash',
-    ['-c', '. "$1" && printf "%s\\n%s\\n%s\\n" "$WAVE_WT_ROOT" "$WAVE_LOG_DIR" "$WAVE_REGISTRY_DIR"', '_', waveEnv],
+    ['-c', '. "$1" && printf "%s\\n%s\\n%s\\n%s\\n" "$WAVE_WT_ROOT" "$WAVE_ENV_FILE" "$WAVE_LOG_DIR" "$WAVE_REGISTRY_DIR"', '_', waveEnv],
     { encoding: 'utf8' },
   )
   assert.equal(r.status, 0, r.stderr)
-  assert.equal(r.stdout, '../My Projects/demo-wt\nlogs/dispatch logs\ndocs/my registry\n')
+  assert.equal(
+    r.stdout,
+    '../My Projects/demo-wt\nenv files/.env.local\nlogs/dispatch logs\ndocs/my registry\n',
+  )
 })
 
 test('new creates the worktree and branch under the configured root', (t) => {
