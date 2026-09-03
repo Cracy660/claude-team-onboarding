@@ -26,7 +26,8 @@ the contract an implementer reads.
 - **Merge `settings.json` with `scripts/merge-settings.mjs`.** Never rewrite that file by hand.
 - **Show a diff and wait for a yes** before appending to `AGENTS.md` or the project `CLAUDE.md`.
 - **Never block.** A failed step emits the diagnostic block and asks how to proceed. A dirty tree
-  is reported, not refused.
+  is reported, not refused. Stopping at the knobs question to wait for the answer is not
+  blocking: it is the one designed pause, and ending your turn there is how you ask.
 
 ## Paths
 
@@ -152,12 +153,18 @@ When the registry is off, `REGISTRY` is `false` and `REGISTRY_DIR` is the empty 
 Take the run timestamp now. Back up `.claude/wave.env` first if it exists.
 
 ```bash
+TS="<the run timestamp>"
 PLUGIN_ROOT="<absolute plugin root>"
 KNOBS="${TMPDIR:-/tmp}/wave-knobs.json"
+[ -f .claude/wave.env ] && cp .claude/wave.env ".claude/wave.env.pre-wave-$TS.bak" && echo "backup .claude/wave.env.pre-wave-$TS.bak"
 node "$PLUGIN_ROOT/scripts/render.mjs" "$PLUGIN_ROOT/templates/project/wave.env.hbs" "$KNOBS" --out .claude/wave.env
 node "$PLUGIN_ROOT/scripts/render.mjs" "$PLUGIN_ROOT/templates/project/AGENTS.md.hbs" "$KNOBS" --out "${TMPDIR:-/tmp}/wave-AGENTS.md"
 node "$PLUGIN_ROOT/scripts/render.mjs" "$PLUGIN_ROOT/templates/project/CLAUDE-section.md.hbs" "$KNOBS" --out "${TMPDIR:-/tmp}/wave-CLAUDE-section.md"
 ```
+
+A refresh run, one that scaffolds a repository `/wave:init` already scaffolded, is what makes this
+backup matter: without it, re-rendering `wave.env` overwrites the previous knobs with no
+`.pre-wave-*.bak` next to it, the exact red flag this skill tells you to stop and redo.
 
 `render.mjs` exits 1 with `render: missing knobs: A, B` when a placeholder survives. That is the
 renderer telling you the knobs file is incomplete: add the key and run it again. Never patch the
