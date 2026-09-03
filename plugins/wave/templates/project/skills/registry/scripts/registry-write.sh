@@ -56,9 +56,21 @@ done
 if [ "$MODE" = "update" ]; then
   [ -n "$SET" ] || die "--set is required for an update"
   case "$TABLE" in
-    spec_statement|finding)
+    spec_statement)
       { [ "$HAVE_NOTE" -eq 1 ] && [ -n "$NOTE" ]; } \
         || die "--note is required for a $TABLE write: it becomes the history row"
+      shopt -s nocasematch
+      [[ "$SET" =~ (^|[^[:alnum:]_])id[[:space:]]*= ]] \
+        && die "renaming the key column is not supported (delete and insert instead)"
+      shopt -u nocasematch
+      ;;
+    finding)
+      { [ "$HAVE_NOTE" -eq 1 ] && [ -n "$NOTE" ]; } \
+        || die "--note is required for a $TABLE write: it becomes the history row"
+      shopt -s nocasematch
+      [[ "$SET" =~ (^|[^[:alnum:]_])(id|finding_id)[[:space:]]*= ]] \
+        && die "renaming the key column is not supported (delete and insert instead)"
+      shopt -u nocasematch
       ;;
   esac
 fi

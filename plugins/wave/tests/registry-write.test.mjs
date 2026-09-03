@@ -118,6 +118,26 @@ test('refuses a spec_statement write without --note', () => {
   }
 })
 
+test('refuses a --set that renames the key column', () => {
+  const repo = makeRegistryRepo()
+  try {
+    const r = write(repo, [
+      'spec_statement',
+      '--set', "id='SP-alpha-09'",
+      '--where', "id='SP-alpha-01'",
+      '--note', 'n',
+    ])
+    assert.equal(r.status, 1)
+    assert.match(r.stderr, /renaming the key column/)
+    assert.equal(
+      query(repo.db, "SELECT id FROM spec_statement WHERE id='SP-alpha-01';"),
+      'SP-alpha-01'
+    )
+  } finally {
+    repo.cleanup()
+  }
+})
+
 test('a statement update writes one history row carrying the old text', () => {
   const repo = makeRegistryRepo()
   try {
@@ -190,6 +210,59 @@ test('a failing update writes no history row', () => {
   }
 })
 
+test('a rejected history row rolls the statement update back', () => {
+  const repo = makeRegistryRepo()
+  try {
+    query(
+      repo.db,
+      "CREATE TRIGGER history_veto BEFORE INSERT ON statement_history BEGIN SELECT RAISE(ABORT, 'history rejected'); END;"
+    )
+    const r = write(repo, [
+      'spec_statement',
+      '--set', "status='approved'",
+      '--where', "id='SP-alpha-01'",
+      '--note', 'review: approved',
+    ])
+    assert.notEqual(r.status, 0)
+    assert.equal(
+      query(repo.db, "SELECT status FROM spec_statement WHERE id='SP-alpha-01';"),
+      'proposed'
+    )
+  } finally {
+    repo.cleanup()
+  }
+})
+
+test('a two-row update writes a history row for each matched statement', () => {
+  const repo = makeRegistryRepo()
+  try {
+    query(
+      repo.db,
+      "INSERT INTO spec_statement VALUES ('SP-alpha-03','alpha','Third statement text.','ruling','proposed','W1',NULL);"
+    )
+    const r = write(repo, [
+      'spec_statement',
+      '--set', "status='approved'",
+      '--where', "status='proposed'",
+      '--note', 'review: wave close',
+    ])
+    assert.equal(r.status, 0, r.stderr)
+    assert.match(r.stdout, /== 2 row\(s\) matched ==/)
+    assert.equal(
+      query(
+        repo.db,
+        'SELECT statement_id, status, old_text FROM statement_history ORDER BY statement_id;'
+      ),
+      [
+        'SP-alpha-01|approved|Original statement text.',
+        'SP-alpha-03|approved|Third statement text.',
+      ].join('\n')
+    )
+  } finally {
+    repo.cleanup()
+  }
+})
+
 test('a finding update writes a status_history row', () => {
   const repo = makeRegistryRepo()
   try {
@@ -244,6 +317,19 @@ test('a spec_statement write regenerates the projection', () => {
       query(proj, 'SELECT id, code_locus FROM spec ORDER BY id;'),
       ['SP-alpha-01|lib/alpha.ts#run', 'SP-alpha-02|'].join('\n')
     )
+  } finally {
+    repo.cleanup()
+  }
+})
+
+test('a spec_statement delete regenerates the projection', () => {
+  const repo = makeRegistryRepo()
+  try {
+    const proj = join(repo.dir, 'spec-exec.db')
+    const r = write(repo, ['spec_statement', '--delete', '--where', "id='SP-alpha-02'"])
+    assert.equal(r.status, 0, r.stderr)
+    assert.match(r.stdout, /spec-exec\.db regenerated: 0 statements/)
+    assert.equal(query(proj, 'SELECT count(*) FROM spec;'), '0')
   } finally {
     repo.cleanup()
   }
