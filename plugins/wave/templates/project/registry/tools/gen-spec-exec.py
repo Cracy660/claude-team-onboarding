@@ -75,7 +75,7 @@ def main():
         dst.close()
         dst = None
         os.replace(tmp, out)
-    except Exception:
+    except BaseException:
         if dst is not None:
             dst.close()
         if tmp.exists():

@@ -35,6 +35,38 @@ function makeRegistry(seed) {
   return { dir, db, cleanup: () => rmSync(dir, { recursive: true, force: true }) }
 }
 
+function writeProjectionFailureInjector(dir, method) {
+  const inject = join(dir, 'inject')
+  const message = method === 'commit' ? 'injected commit failure' : 'injected failure'
+  mkdirSync(inject)
+  writeFileSync(
+    join(inject, 'sitecustomize.py'),
+    `import sqlite3
+
+real_connect = sqlite3.connect
+
+class ConnectionProxy:
+    def __init__(self, connection):
+        self.connection = connection
+
+    def ${method}(self, *args, **kwargs):
+        raise RuntimeError("${message}")
+
+    def __getattr__(self, name):
+        return getattr(self.connection, name)
+
+def connect(path, *args, **kwargs):
+    connection = real_connect(path, *args, **kwargs)
+    if "spec-exec" in str(path):
+        return ConnectionProxy(connection)
+    return connection
+
+sqlite3.connect = connect
+`
+  )
+  return inject
+}
+
 const PROJECTION_SEED = `
 INSERT INTO spec_statement VALUES ('SP-alpha-01','alpha','Approved statement text.','parity-confirmed','approved','W1',NULL);
 INSERT INTO spec_statement VALUES ('SP-alpha-02','alpha','Proposed statement text.','ruling','proposed',NULL,NULL);
@@ -98,39 +130,40 @@ test('a failed regeneration leaves the previous projection in place', () => {
     assert.equal(first.status, 0, first.stderr)
     assert.equal(query(proj, 'SELECT id FROM spec;'), 'SP-alpha-01')
 
-    const inject = join(reg.dir, 'inject')
-    mkdirSync(inject)
-    writeFileSync(
-      join(inject, 'sitecustomize.py'),
-      `import sqlite3
-
-real_connect = sqlite3.connect
-
-class ConnectionProxy:
-    def __init__(self, connection):
-        self.connection = connection
-
-    def executemany(self, *args, **kwargs):
-        raise RuntimeError("injected failure")
-
-    def __getattr__(self, name):
-        return getattr(self.connection, name)
-
-def connect(path, *args, **kwargs):
-    connection = real_connect(path, *args, **kwargs)
-    if "spec-exec" in str(path):
-        return ConnectionProxy(connection)
-    return connection
-
-sqlite3.connect = connect
-`
-    )
+    const inject = writeProjectionFailureInjector(reg.dir, 'executemany')
     const failed = spawnSync('python3', [GEN_SPEC, '--registry-dir', reg.dir], {
       encoding: 'utf8',
       env: { ...process.env, PYTHONPATH: inject },
     })
     assert.notEqual(failed.status, 0)
     assert.match(failed.stderr, /injected failure/)
+    assert.equal(query(proj, 'SELECT id FROM spec;'), 'SP-alpha-01')
+    assert.deepEqual(
+      readdirSync(reg.dir).filter((name) => name.endsWith('.tmp')),
+      []
+    )
+  } finally {
+    reg.cleanup()
+  }
+})
+
+test('a regeneration that fails at commit leaves the previous projection in place', () => {
+  const reg = makeRegistry(PROJECTION_SEED)
+  try {
+    const proj = join(reg.dir, 'spec-exec.db')
+    const first = spawnSync('python3', [GEN_SPEC, '--registry-dir', reg.dir], {
+      encoding: 'utf8',
+    })
+    assert.equal(first.status, 0, first.stderr)
+    assert.equal(query(proj, 'SELECT id FROM spec;'), 'SP-alpha-01')
+
+    const inject = writeProjectionFailureInjector(reg.dir, 'commit')
+    const failed = spawnSync('python3', [GEN_SPEC, '--registry-dir', reg.dir], {
+      encoding: 'utf8',
+      env: { ...process.env, PYTHONPATH: inject },
+    })
+    assert.notEqual(failed.status, 0)
+    assert.match(failed.stderr, /injected commit failure/)
     assert.equal(query(proj, 'SELECT id FROM spec;'), 'SP-alpha-01')
     assert.deepEqual(
       readdirSync(reg.dir).filter((name) => name.endsWith('.tmp')),
@@ -242,7 +275,21 @@ test('a statement whose text carries a sentinel word reaches the panel data unto
     const html = panel(reg.dir, [])
     const data = JSON.parse(html.match(/^const DATA = (.*);$/m)[1])
     assert.equal(data[0].text, text)
-    assert.match(html, />1 statements &middot; generated /)
+    assert.match(html, />1 statements &middot; generated \d{4}-\d{2}-\d{2}</)
+    assert.match(html, /<title>Statement review \d{4}-\d{2}-\d{2}<\/title>/)
+  } finally {
+    reg.cleanup()
+  }
+})
+
+test('an area name carrying a sentinel reaches the panel areas untouched', () => {
+  const reg = makeRegistry(
+    `INSERT INTO spec_statement VALUES ('SP-alpha-01','alpha __COUNT__','Area probe.','ruling','proposed',NULL,NULL);`
+  )
+  try {
+    const html = panel(reg.dir, [])
+    const areas = JSON.parse(html.match(/^const AREAS = (.*);$/m)[1])
+    assert.deepEqual(areas, ['alpha __COUNT__'])
   } finally {
     reg.cleanup()
   }
