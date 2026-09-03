@@ -34,7 +34,8 @@ case "$branch" in "$BRANCH_PREFIX"/*) task_branch=1 ;; esac
 [ "$task_branch" = 1 ] || exit 0
 
 staged="$(git -C "$target" diff --cached --name-only 2>/dev/null || true)"
-if printf '%s\n%s' "$cmd" "$staged" | grep -qE "$REGISTRY_DIR/[^[:space:]]*\.db"; then
+registry_re="$(printf '%s' "$REGISTRY_DIR" | sed 's/[][\.*^$+?(){}|]/\\&/g')"
+if printf '%s\n%s' "$cmd" "$staged" | grep -qE "$registry_re/[^[:space:]]*\.db"; then
   echo "Blocked: task branches carry CODE ONLY. Registry .db flips happen in the main checkout after rebase-and-merge (see the wave dispatch section of CLAUDE.md)." >&2
   exit 2
 fi

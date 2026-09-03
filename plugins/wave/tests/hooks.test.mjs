@@ -10,8 +10,8 @@ const REGISTRY_GUARD = join(PLUGIN_ROOT, 'templates/project/hooks/registry-guard
 const DEFAULT_WAVE_ENV = { BRANCH_PREFIX: 'codex', REGISTRY_DIR: 'docs/registry' }
 const REPO_FILES = { 'docs/registry/registry.db': 'db\n', 'src/a.txt': 'a\n' }
 
-function setup(t, { waveEnv = DEFAULT_WAVE_ENV } = {}) {
-  const repo = makeTempRepo({ waveEnv, files: REPO_FILES })
+function setup(t, { waveEnv = DEFAULT_WAVE_ENV, files = REPO_FILES } = {}) {
+  const repo = makeTempRepo({ waveEnv, files })
   t.after(() => repo.cleanup())
   return {
     ...repo,
@@ -46,6 +46,18 @@ test('code-only-branch blocks a registry commit from a linked worktree', (t) => 
   assert.match(r.stderr, /Blocked: task branches carry CODE ONLY/)
 })
 
+test('code-only-branch blocks a registry commit when the registry directory carries a regex metacharacter', (t) => {
+  const ctx = setup(t, {
+    waveEnv: { BRANCH_PREFIX: 'codex', REGISTRY_DIR: 'docs/reg+istry' },
+    files: { 'docs/reg+istry/registry.db': 'db\n', 'src/a.txt': 'a\n' },
+  })
+  const wt = ctx.worktree('task-plus')
+  ctx.stage(wt, 'docs/reg+istry/registry.db', 'x\n')
+  const r = ctx.hook(CODE_ONLY, `git -C ${wt} commit -m "flip"`)
+  assert.equal(r.status, 2)
+  assert.match(r.stderr, /Blocked: task branches carry CODE ONLY/)
+})
+
 test('code-only-branch passes a commit from that worktree that leaves the registry alone', (t) => {
   const ctx = setup(t)
   const wt = ctx.worktree('task-a')
@@ -68,6 +80,17 @@ test('registry-guard blocks raw destructive SQL against the registry', (t) => {
   const r = ctx.hook(
     REGISTRY_GUARD,
     `sqlite3 docs/registry/registry.db "UPDATE spec_statement SET status='x'"`,
+  )
+  assert.equal(r.status, 2)
+  assert.match(r.stderr, /Blocked: raw destructive SQL against the registry/)
+})
+
+test('registry-guard does not let a glob in the program token expand against the working directory', (t) => {
+  const ctx = setup(t)
+  writeFileSync(join(ctx.root, 'zz-registry-write.sh'), '')
+  const r = ctx.hook(
+    REGISTRY_GUARD,
+    '*registry-write.sh* docs/registry/registry.db "DELETE FROM spec_statement"',
   )
   assert.equal(r.status, 2)
   assert.match(r.stderr, /Blocked: raw destructive SQL against the registry/)

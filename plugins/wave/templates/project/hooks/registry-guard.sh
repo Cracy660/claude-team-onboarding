@@ -40,6 +40,8 @@ while IFS= read -r seg; do
     # Program token: the first non-blank word, skipping a leading `bash` or
     # `python3` and any VAR=value assignments.
     token=""
+    # A glob in the program token must not expand against the hook's working directory.
+    set -f
     for word in $seg; do
       case "$word" in
         [A-Za-z_]*=*) continue ;;
@@ -48,6 +50,7 @@ while IFS= read -r seg; do
       token="$word"
       break
     done
+    set +f
     case "$token" in
       *registry-write.sh) : ;;
       *"$REGISTRY_DIR"/tools/*) : ;;

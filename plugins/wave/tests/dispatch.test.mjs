@@ -1,5 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
 import {
   chmodSync,
   existsSync,
@@ -90,6 +91,28 @@ test('the rendered wave.env is what the script reads its defaults from', (t) => 
   assert.equal(r.status, 1)
   assert.match(r.stdout, /^Defaults: --model gpt-5\.6-terra --effort medium/m)
   assert.match(r.stdout, /^use --model gpt-5\.6-sol for multi-file or judgment tasks\.$/m)
+})
+
+test('the rendered wave.env sources cleanly when a path knob carries a space', (t) => {
+  const knobs = {
+    ...JSON.parse(readFileSync(join(PLUGIN_ROOT, 'tests/fixtures/knobs.sample.json'), 'utf8')),
+    WT_ROOT: '../My Projects/demo-wt',
+    LOG_DIR: 'logs/dispatch logs',
+    REGISTRY_DIR: 'docs/my registry',
+  }
+  const rendered = render('templates/project/wave.env.hbs', knobs)
+  const repo = makeTempRepo({ waveEnv: {} })
+  t.after(() => repo.cleanup())
+  mkdirSync(join(repo.root, '.claude'), { recursive: true })
+  const waveEnv = join(repo.root, '.claude/wave.env')
+  writeFileSync(waveEnv, rendered)
+  const r = spawnSync(
+    'bash',
+    ['-c', '. "$1" && printf "%s\\n%s\\n%s\\n" "$WAVE_WT_ROOT" "$WAVE_LOG_DIR" "$WAVE_REGISTRY_DIR"', '_', waveEnv],
+    { encoding: 'utf8' },
+  )
+  assert.equal(r.status, 0, r.stderr)
+  assert.equal(r.stdout, '../My Projects/demo-wt\nlogs/dispatch logs\ndocs/my registry\n')
 })
 
 test('new creates the worktree and branch under the configured root', (t) => {
