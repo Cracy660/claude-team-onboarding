@@ -40,8 +40,9 @@ under plugins/wave/skills/. When you are done, say what you changed.
 
 ## GREEN prompt
 
-Re-run the setup, then dispatch the same agent type with the identical prompt plus this first
-line:
+Re-run the setup, then dispatch the same agent type with the RED prompt, with "Do not read
+anything under plugins/wave/skills/." replaced by "You may read the skill named above and nothing
+else under plugins/wave/skills/.", preceded by this first line:
 
 ```
 Use the skill at <REPO>/plugins/wave/skills/setup/SKILL.md. Follow it.
