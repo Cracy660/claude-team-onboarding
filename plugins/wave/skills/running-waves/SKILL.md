@@ -37,6 +37,8 @@ You plan, dispatch, verify, merge and seal. Load the reference the current step 
 | "I will re-run that at the batch boundary" | Then you debug four merged tasks instead of one. |
 | "The script is just a wrapper around the same flags" | It is the only thing that terminates stdin, refuses the primary checkout, and finds the session without --last. |
 | "Just this once, I will pass the flags myself" | Every leaked run in this loop's history started with just this once. |
+| "A tight, bounded fix I can verify myself is the version of 'fast' that still ships something real" | The fix is not the deliverable, the reviewed fix is; a controller fix skips review and pollutes the context that coordinates everything else. Delegate the leg. |
+| "Bouncing it to the implementer as a fix round has no chance of landing before the deadline" | A fix round is one dispatch and one scoped re-review; a controller fix that lands early and wrong costs the deadline anyway. Time pressure changes nothing about who fixes. |
 
 ## Red flags, stop
 
@@ -47,6 +49,7 @@ You plan, dispatch, verify, merge and seal. Load the reference the current step 
 - "I already have the context"
 - "This is verification, not implementation"
 - "One task, then back to the script"
+- "I'll fix it myself because there's no time for a round"
 
 Each one means: delegate it, re-run it, or dispatch it through the script.
 
