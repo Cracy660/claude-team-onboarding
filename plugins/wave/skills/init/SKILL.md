@@ -89,6 +89,10 @@ the Codex sandbox and the implementer needs the binary path instead.
 
 ## Step 3: ask the knobs, once
 
+**Ask the knobs question exactly once, even when the request says do it now, one pass, or
+non-interactive.** Values the user already gave in their message count as answers; anything
+missing is asked. Taking defaults silently is the failure this step exists to prevent.
+
 Send one message. Defaults in brackets. Say that `defaults` accepts all of them.
 
 ```
@@ -168,7 +172,13 @@ sed -i.bak '/<!-- wave:todo-house-conventions -->/,/<!-- \/wave:todo-house-conve
 sed -i.bak '/wave:todo-house-conventions/d' "${TMPDIR:-/tmp}/wave-AGENTS.md" && rm "${TMPDIR:-/tmp}/wave-AGENTS.md.bak"
 ```
 
-Run exactly one of those two. `-i.bak` is the form that works on both BSD and GNU sed.
+Run exactly one of those two, then squeeze the blank-line gap the deletion leaves:
+
+```bash
+sed -i.bak '/^$/N;/^\n$/D' "${TMPDIR:-/tmp}/wave-AGENTS.md" && rm "${TMPDIR:-/tmp}/wave-AGENTS.md.bak"
+```
+
+`-i.bak` is the form that works on both BSD and GNU sed.
 
 ## Step 6: copy the rest verbatim
 
@@ -357,6 +367,7 @@ for the user to review and commit.
 | "sqlite3 is missing, so the registry files are pointless" | Copy them, report the missing binary, print the one command. The registry works the moment sqlite3 arrives. |
 | "The tree is dirty, I should stop and ask" | Report it in one line and continue. Refusing on a dirty tree is not in this skill. |
 | "The rendered AGENTS.md is better than theirs, replace it" | Append the missing sections only. Their sections are their conventions. |
+| "This ran non-interactively, so I took the skill's stated defaults" | Ask anyway. Values the user already gave in the request count as answers; anything else still gets asked. Taking defaults silently is the failure step 3 exists to prevent. |
 
 ## When something fails
 
