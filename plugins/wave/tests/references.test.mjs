@@ -124,6 +124,13 @@ test('seal-checklist.md sources wave.env before every registry query and hardcod
       'a registry query uses WAVE_REGISTRY_DIR before sourcing wave.env',
     )
   }
+  const stageBlock = registryBlocks.find((block) => block.includes("stage='W<N>'"))
+  assert.ok(stageBlock, 'no registry block contains the generic wave stage count')
+  assert.ok(
+    stageBlock.indexOf('GROUP BY stage') >= 0 &&
+      stageBlock.indexOf('GROUP BY stage') < stageBlock.indexOf("stage='W<N>'"),
+    'the stage list must appear before the wave stage count',
+  )
 })
 
 test('gate-prompt.md orders the probe reverted and the review distrusts the report', () => {

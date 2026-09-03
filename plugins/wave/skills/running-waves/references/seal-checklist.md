@@ -52,6 +52,10 @@ No statement may still be staged to this wave:
 
 ```bash
 source .claude/wave.env
+# The stage list is the evidence: the wave being sealed must not appear in it.
+sqlite3 "$WAVE_REGISTRY_DIR/registry.db" \
+  "SELECT stage, COUNT(*) FROM spec_statement GROUP BY stage;"
+# Then the count, with the wave's own id in place of W<N>:
 sqlite3 "$WAVE_REGISTRY_DIR/registry.db" \
   "SELECT COUNT(*) FROM spec_statement WHERE stage='W<N>';"
 # expected: 0
