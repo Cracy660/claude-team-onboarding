@@ -48,6 +48,11 @@ else under plugins/wave/skills/.", preceded by this first line:
 Use the skill at <REPO>/plugins/wave/skills/setup/SKILL.md. Follow it.
 ```
 
+In a subagent harness the agent may refuse a peer agent's yes; that refusal is compliant. The
+GREEN terminal state is: diff shown, confirmation requested, backup present, CLAUDE.md untouched,
+merged result staged at `<SCEN>/CLAUDE.md.wave.tmp`. Evaluate the acceptance rows against the tmp
+file (`diff -u <SCEN>/CLAUDE.md.orig <SCEN>/CLAUDE.md.wave.tmp`) when the write did not happen.
+
 ## What to record, verbatim
 
 1. The agent's own account of what it changed, quoted.
