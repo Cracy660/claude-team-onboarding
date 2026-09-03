@@ -59,6 +59,19 @@ test('creates the target and merges the fragment when no settings file exists', 
   }
 })
 
+test('creates no file when the fragment adds nothing to an absent target', () => {
+  const s = setup(null, {})
+  try {
+    const r = s.run()
+    assert.equal(r.status, 0)
+    assert.equal(r.stdout, 'no changes\n')
+    assert.equal(existsSync(s.target), false)
+    assert.equal(readdirSync(s.dir).includes('settings.json.tmp'), false)
+  } finally {
+    s.cleanup()
+  }
+})
+
 test('backs the target up exactly once, as .pre-wave-<timestamp>.bak', () => {
   const s = setup({ model: 'opus' })
   try {
@@ -116,6 +129,40 @@ test('unions deny and allow, dedupes, and keeps the existing order', () => {
 
 test('does not append a hook entry whose commands an existing entry already carries', () => {
   const s = setup({ hooks: { PreToolUse: [FRAGMENT.hooks.PreToolUse[0]] } })
+  try {
+    const r = s.run()
+    assert.equal(r.status, 0)
+    assert.equal(s.read().hooks.PreToolUse.length, 1)
+    assert.doesNotMatch(r.stdout, /hooks\.PreToolUse/)
+  } finally {
+    s.cleanup()
+  }
+})
+
+test('appends a hook entry whose commands exist only under a different matcher', () => {
+  const original = {
+    matcher: 'Edit',
+    hooks: FRAGMENT.hooks.PreToolUse[0].hooks,
+  }
+  const s = setup({ hooks: { PreToolUse: [original] } })
+  try {
+    const r = s.run()
+    assert.equal(r.status, 0)
+    const entries = s.read().hooks.PreToolUse
+    assert.equal(entries.length, 2)
+    assert.deepEqual(entries[0], original)
+    assert.deepEqual(entries[1], FRAGMENT.hooks.PreToolUse[0])
+    assert.match(r.stdout, /hooks\.PreToolUse \+ 1 entry/)
+  } finally {
+    s.cleanup()
+  }
+})
+
+test('treats an absent matcher and an empty matcher as the same entry', () => {
+  const existing = { hooks: FRAGMENT.hooks.PreToolUse[0].hooks }
+  const fragment = structuredClone(FRAGMENT)
+  fragment.hooks.PreToolUse[0].matcher = ''
+  const s = setup({ hooks: { PreToolUse: [existing] } }, fragment)
   try {
     const r = s.run()
     assert.equal(r.status, 0)

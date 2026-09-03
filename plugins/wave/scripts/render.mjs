@@ -28,7 +28,9 @@ function fail(message) {
 
 const { template, knobsPath, out } = parseArgs(process.argv.slice(2))
 if (!template || !knobsPath) fail('usage: render.mjs <template> <knobs.json> [--out <file>]')
-if (out === null && process.argv.includes('--out')) fail('render: --out needs a file path')
+if ((out === undefined || out === null) && process.argv.includes('--out')) {
+  fail('render: --out needs a file path')
+}
 
 let knobs
 try {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Merges a settings fragment into a Claude settings.json without losing anything.
-// Union on permissions.deny and permissions.allow, append-if-absent on hook entries,
+// Union on permissions.deny and permissions.allow, append-if-absent on hook entries with the same matcher,
 // every other key untouched. Backs the target up, writes atomically.
 // Usage: node scripts/merge-settings.mjs <settings.json> <fragment.json>
 import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
@@ -60,7 +60,7 @@ for (const bucket of ['deny', 'allow']) {
   }
 }
 
-// hooks: append an entry unless an existing entry already carries every command it has.
+// hooks: append an entry unless an entry with the same matcher already carries every command it has.
 const fragmentHooks = fragment.hooks || {}
 for (const [event, entries] of Object.entries(fragmentHooks)) {
   const incoming = Array.isArray(entries) ? entries : []
@@ -69,11 +69,12 @@ for (const [event, entries] of Object.entries(fragmentHooks)) {
   const appended = []
   for (const entry of incoming) {
     const wanted = commandsOf(entry)
+    const wantedMatcher = String(entry.matcher ?? '')
     const covered =
       wanted.length > 0 &&
       [...current, ...appended].some((existing) => {
         const have = commandsOf(existing)
-        return wanted.every((command) => have.includes(command))
+        return String(existing.matcher ?? '') === wantedMatcher && wanted.every((command) => have.includes(command))
       })
     if (!covered) appended.push(entry)
   }
@@ -92,7 +93,7 @@ if (existed && changes.length > 0) {
   copyFileSync(targetPath, backupPath)
 }
 
-if (changes.length > 0 || !existed) {
+if (changes.length > 0) {
   const tmpPath = `${targetPath}.tmp`
   mkdirSync(dirname(targetPath), { recursive: true })
   writeFileSync(tmpPath, `${JSON.stringify(target, null, 2)}\n`)
