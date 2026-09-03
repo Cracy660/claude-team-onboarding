@@ -76,6 +76,42 @@ test -f pyproject.toml && grep -nE '^\[tool\.(pytest|ruff|uv)' pyproject.toml
 
 Command 4 fails loudly when there is no `package.json`; that is the signal to use command 5.
 
+When `.claude/wave.env` exists, read its existing knobs from the repo root with this exact
+bash 3.2-compatible shell. The subshell prevents the sourced values from changing the caller's
+environment. Only assignments the file carries are printed, including assignments whose value
+is empty.
+
+```bash
+if [ -f .claude/wave.env ]; then
+  (
+    set -a
+    . .claude/wave.env
+    set +a
+    for name in WAVE_WT_ROOT WAVE_BRANCH_PREFIX WAVE_ENV_FILE WAVE_INSTALL_CMD WAVE_MODEL_DEFAULT WAVE_EFFORT_DEFAULT WAVE_MODEL_JUDGMENT WAVE_LOG_DIR WAVE_REGISTRY_DIR WAVE_EXTERNAL_KEYS; do
+      case "$name" in
+        WAVE_WT_ROOT) value=${WAVE_WT_ROOT-} ;;
+        WAVE_BRANCH_PREFIX) value=${WAVE_BRANCH_PREFIX-} ;;
+        WAVE_ENV_FILE) value=${WAVE_ENV_FILE-} ;;
+        WAVE_INSTALL_CMD) value=${WAVE_INSTALL_CMD-} ;;
+        WAVE_MODEL_DEFAULT) value=${WAVE_MODEL_DEFAULT-} ;;
+        WAVE_EFFORT_DEFAULT) value=${WAVE_EFFORT_DEFAULT-} ;;
+        WAVE_MODEL_JUDGMENT) value=${WAVE_MODEL_JUDGMENT-} ;;
+        WAVE_LOG_DIR) value=${WAVE_LOG_DIR-} ;;
+        WAVE_REGISTRY_DIR) value=${WAVE_REGISTRY_DIR-} ;;
+        WAVE_EXTERNAL_KEYS) value=${WAVE_EXTERNAL_KEYS-} ;;
+      esac
+      grep -q "^${name}=" .claude/wave.env && printf '%s=%s\n' "$name" "$value"
+    done
+  )
+fi
+```
+
+Use each printed `WAVE_*` value as the bracketed default for its corresponding knob in step 3:
+`WT_ROOT`, `BRANCH_PREFIX`, `ENV_FILE`, `INSTALL_CMD`, `MODEL_DEFAULT`, `EFFORT_DEFAULT`,
+`MODEL_JUDGMENT`, `LOG_DIR`, `REGISTRY_DIR`, and `EXTERNAL_KEYS`. An empty carried value is still
+the default, shown as `none` where the question already uses that display. Detection results fill
+only knobs that `.claude/wave.env` does not carry.
+
 | Lockfile | `INSTALL_CMD` | `TEST_BIN_HINT` |
 |---|---|---|
 | `pnpm-lock.yaml` | `pnpm install --prefer-offline --silent` | `./node_modules/.bin/<runner>` |
@@ -103,15 +139,17 @@ Send one message. Defaults in brackets. Say that `defaults` accepts all of them.
 ```
 Wave scaffold for <REPO_NAME>. Reply "defaults" to take every bracketed value.
 
-1. Worktree root [../<REPO_NAME>-wt]
-2. Task branch prefix [codex]
-3. Implementer models: mechanical [gpt-5.6-terra], judgment [gpt-5.6-sol], effort [medium]
-4. Statement registry, a SQLite spec and findings database with guarded writes? [yes]
-   directory [docs/registry]
-5. Dispatch log directory [.superpowers/dispatch-logs]
-6. House conventions: three to five lines for AGENTS.md, the indirections an implementer in this
+1. Worktree root [<WT_ROOT default>]
+2. Task branch prefix [<BRANCH_PREFIX default>]
+3. Env file copied into each worktree [<ENV_FILE default or none>]
+4. Install command run in each worktree [<INSTALL_CMD default or none>]
+5. Implementer models: mechanical [<MODEL_DEFAULT default>], judgment [<MODEL_JUDGMENT default>], effort [<EFFORT_DEFAULT default>]
+6. Statement registry, a SQLite spec and findings database with guarded writes? [<yes when REGISTRY_DIR is non-empty, otherwise no>]
+   directory [<REGISTRY_DIR default or none>]
+7. Dispatch log directory [<LOG_DIR default>]
+8. House conventions: three to five lines for AGENTS.md, the indirections an implementer in this
    repo must not bypass. Skipping leaves a marked TODO block in AGENTS.md.
-7. Env var names masked when you seal a wave, space separated, for example OPENAI_API_KEY [none]
+9. Env var names masked when you seal a wave, space separated, for example OPENAI_API_KEY [<EXTERNAL_KEYS default or none>]
 
 Detected: package manager <pm>, env file <ENV_FILE or none>, test "<TEST_CMD>",
 build "<BUILD_CMD or none>", test binary "<TEST_BIN_HINT or none>".

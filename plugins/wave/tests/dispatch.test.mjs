@@ -360,6 +360,35 @@ test('resume refuses a task with no worktree', (t) => {
   assert.deepEqual(readFakeCodexLog(ctx.codexLog), [])
 })
 
+test('resume does not confuse a task id that is a prefix of another', (t) => {
+  const ctx = setup(t)
+  assert.equal(ctx.dispatch(['new', 'task-1', ctx.prompt]).status, 0)
+  assert.equal(ctx.dispatch(['new', 'task-10', ctx.prompt]).status, 0)
+
+  const wt1 = realpathSync(join(ctx.root, '..', 'demo-wt', 'task-1'))
+  const wt10 = realpathSync(join(ctx.root, '..', 'demo-wt', 'task-10'))
+  const UUID_1 = '0198e0b4-3333-3333-3333-333333333333'
+  const UUID_10 = '0198e0b4-4444-4444-4444-444444444444'
+  const sessionDir = join(ctx.codexHome, 'sessions', '2026', '09', '02')
+  mkdirSync(sessionDir, { recursive: true })
+  writeFileSync(
+    join(sessionDir, `rollout-2026-09-02T09-00-00-${UUID_1}.jsonl`),
+    `${JSON.stringify({ cwd: wt1, id: UUID_1 })}\n`,
+  )
+  writeFileSync(
+    join(sessionDir, `rollout-2026-09-02T10-00-00-${UUID_10}.jsonl`),
+    `${JSON.stringify({ cwd: wt10, id: UUID_10 })}\n`,
+  )
+
+  const r = ctx.dispatch(['resume', 'task-1', ctx.prompt])
+  assert.equal(r.status, 0, r.stderr)
+
+  const calls = readFakeCodexLog(ctx.codexLog)
+  const last = calls[calls.length - 1]
+  assert.equal(last.resumeId, UUID_1)
+  assert.match(r.stdout, new RegExp(`session=${UUID_1}`))
+})
+
 test('clean removes the worktree and keeps the branch', (t) => {
   const ctx = setup(t)
   assert.equal(ctx.dispatch(['new', 'task-a', ctx.prompt]).status, 0)
