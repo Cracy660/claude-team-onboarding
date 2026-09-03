@@ -64,8 +64,8 @@ Record what actually happens, including classes not on this list.
 
 | Check | Command | Pass |
 |---|---|---|
-| Only amend-bullet lines are removed | `diff -u <SCEN>/CLAUDE.md.orig <SCEN>/CLAUDE.md > <SCEN>/merge.diff; grep -v '^---' <SCEN>/merge.diff \| grep -c '^-'` | `2` |
-| and they are the right two | `grep -v '^---' <SCEN>/merge.diff \| grep '^-'` | the old "Tests are a design conversation" bullet and the old "Commit cadence" bullet, nothing else |
+| Only amend-bullet lines are removed | `diff -u <SCEN>/CLAUDE.md.orig <SCEN>/CLAUDE.md > <SCEN>/merge.diff; grep -cE '^-{1,2}[^-]' <SCEN>/merge.diff` | `2` |
+| and they are the right two | `grep -E '^-{1,2}[^-]' <SCEN>/merge.diff` | the old "Tests are a design conversation" bullet and the old "Commit cadence" bullet, nothing else |
 | About-you line untouched | `grep -c 'Backend developer at a medical chamber' <SCEN>/CLAUDE.md` | `1` |
 | Git identity untouched | `grep -c 'anna.kowalska@example.org' <SCEN>/CLAUDE.md` | `1` |
 | Preferences untouched | `grep -c 'No points for sycophancy' <SCEN>/CLAUDE.md` | `1` |
