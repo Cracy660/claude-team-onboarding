@@ -388,7 +388,7 @@ backups: <paths | none>
 knobs: worktree <WT_ROOT>, branch <BRANCH_PREFIX>/<task>, models <MODEL_DEFAULT> and
   <MODEL_JUDGMENT> at <EFFORT_DEFAULT>, env file <ENV_FILE | none>, registry <dir | off>
 not done: <sqlite3 missing, house conventions still TODO, ... | nothing>
-next: the method itself is the running-waves skill. Ask for the first-wave walkthrough.
+next: execution runs under superpowers:subagent-driven-development with the running-waves skill on top. Ask for the first-wave walkthrough.
 ```
 
 Close the receipt with these two lines. `.claude/wave.env` is trusted input: `dispatch.sh` runs
