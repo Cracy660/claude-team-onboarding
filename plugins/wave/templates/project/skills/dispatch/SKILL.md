@@ -22,7 +22,7 @@ missing.
 # the wave variables, so source the config first, or write the model id out:
 source .claude/wave.env
 .claude/skills/dispatch/scripts/dispatch.sh new <task-id> <prompt-file> \
-  --model "$WAVE_MODEL_JUDGMENT" --effort high
+  --model "$WAVE_MODEL_JUDGMENT"
 
 # Red to Green, or a fix round, on an existing task:
 .claude/skills/dispatch/scripts/dispatch.sh resume <task-id> <prompt-file>

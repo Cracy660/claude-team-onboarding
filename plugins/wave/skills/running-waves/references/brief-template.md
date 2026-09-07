@@ -22,6 +22,12 @@ look like carelessness are context starvation.
 | 8 Do not | No subagents, no commits, no writes outside the worktree | Work the controller cannot review or attribute |
 | 9 Report contract | Report path, required sections, status enum, final-message cap | A report that has to be chased for the counts |
 
+A brief carries no reference implementation and no instruction to weigh alternatives.
+The implementer is a second model family precisely so that it thinks on its own; shown
+code makes it transcribe the plan's defects, and a hint steers the design the review is
+meant to judge independently. Exact values, signatures and copy are requirements, not
+implementation, and stay verbatim.
+
 ## The template
 
 ```markdown
@@ -30,7 +36,8 @@ look like carelessness are context starvation.
 Read AGENTS.md first at the worktree root: it is your standing contract. Then read this
 brief; it is your requirements, with the exact values, file names, signatures, copy and
 test cases to use verbatim. Transcribe quoted values exactly, including any that look
-wrong to you, and say so in the report rather than correcting them silently.
+wrong to you, and say so in the report rather than correcting them silently. The brief
+says what must be true, never how to build it: design the implementation yourself.
 <Add on a gated task: This task is gated: an adversarial reviewer will try to prove your
 test suite can be fooled, so every rule in this brief needs a test that fails when the
 rule is broken.>

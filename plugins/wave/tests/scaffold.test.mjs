@@ -12,7 +12,7 @@ const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'))
 test('plugin.json parses and names the plugin wave', () => {
   const manifest = readJson(join(PLUGIN_ROOT, 'plugin.json'))
   assert.equal(manifest.name, 'wave')
-  assert.equal(manifest.version, '0.1.1')
+  assert.equal(manifest.version, '0.1.2')
   assert.ok(manifest.description.length > 0)
 })
 

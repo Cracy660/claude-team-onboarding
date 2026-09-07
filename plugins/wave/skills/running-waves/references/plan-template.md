@@ -116,8 +116,11 @@ Rules to implement exactly:
       Run, paste per-test failure output.
 - [ ] **Step 2: Run test to verify it fails**
       Run: `<command>`  Expected: FAIL with "<message>"
-- [ ] **Step 3: Write minimal implementation**
-      <The complete file contents, or the exact edit anchored by content.>
+- [ ] **Step 3: Implement**
+      <What must be true when this step is done: the rules with their exact values, the
+      signatures from the interface contract, the files this task may touch. No reference
+      implementation and no suggested approach: the implementer designs it, the review
+      finds the delta.>
 - [ ] **Step 4: Run tests to verify they pass**
       Run: `<command>`  Expected: PASS
 - [ ] **Step 5: Commit**
@@ -130,7 +133,11 @@ ways this suite could pass a wrong implementation>) plus standard review.>
 ## Rules for the authors
 
 - No placeholders. No "TBD", no "similar to Task N", no "write tests for the above". Every
-  code step shows the complete file or the exact anchored edit.
+  task states its behavior completely: exact values, copy, signatures, file ownership and
+  test descriptions.
+- No reference implementation and no "consider alternatives" hints. Shown code turns the
+  implementer into a transcriber of the plan's own defects; a hint steers the design the
+  review is meant to judge independently. The implementer thinks with its own weights.
 - Every grep, count or help output the plan cites is executed by its author, with the real
   output pasted. Invented evidence survives review and fails in the worktree.
 - One task is one test cycle a reviewer could reject on its own. Fold configuration and
